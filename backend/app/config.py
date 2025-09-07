@@ -9,4 +9,18 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    DB_URL: str = os.getenv("DB_URL", "postgresql+psycopg2://user:password@db:5432/finance_app")
+
+    # Tax Configuration
+    TAX_BASIC_EXEMPTION_LIMIT: float = 250000.0
+    TAX_STANDARD_DEDUCTION: float = 50000.0
+    TAX_80C_CAP: float = 150000.0
+    TAX_SLABS: list = [
+        {"limit": 250000, "rate": 0.00},
+        {"limit": 500000, "rate": 0.05},
+        {"limit": 1000000, "rate": 0.20},
+        {"limit": float('inf'), "rate": 0.30},
+    ]
+
+
 settings = Settings()

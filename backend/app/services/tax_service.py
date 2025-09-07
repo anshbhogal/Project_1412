@@ -1,0 +1,80 @@
+from sqlalchemy.orm import Session
+from typing import List
+
+from .. import models, schemas
+from ..config import settings
+
+def get_user_transactions(db: Session, user_id: int):
+    return db.query(models.Transaction).filter(models.Transaction.user_id == user_id).all()
+
+def get_user_tax_deductions(db: Session, user_id: int):
+    return db.query(models.TaxDeduction).filter(models.TaxDeduction.user_id == user_id).all()
+
+def calculate_tax_summary(db: Session, user_id: int) -> schemas.tax.TaxSummaryResponse:
+    transactions = get_user_transactions(db, user_id)
+    
+    gross_income = sum(t.amount for t in transactions if t.category == "income")
+    
+    # Standard Deduction
+    total_deductions = settings.TAX_STANDARD_DEDUCTION
+
+    # 80C Deductions
+    deductions_80c = get_user_tax_deductions(db, user_id)
+    total_80c_deductions = sum(d.amount for d in deductions_80c)
+    
+    # Apply 80C cap
+    total_deductions += min(total_80c_deductions, settings.TAX_80C_CAP)
+
+    taxable_income = gross_income - total_deductions
+    if taxable_income < 0: 
+        taxable_income = 0
+    
+    tax_liability = 0.0
+    remaining_taxable_income = taxable_income
+
+    for slab in settings.TAX_SLABS:
+        if remaining_taxable_income <= 0: 
+            break
+
+        slab_limit = slab["limit"]
+        slab_rate = slab["rate"]
+
+        if slab_limit == float('inf'): # Last slab
+            tax_liability += remaining_taxable_income * slab_rate
+            remaining_taxable_income = 0
+        elif remaining_taxable_income > slab_limit - settings.TAX_BASIC_EXEMPTION_LIMIT:
+            income_in_slab = min(remaining_taxable_income, slab_limit - settings.TAX_BASIC_EXEMPTION_LIMIT)
+            tax_liability += income_in_slab * slab_rate
+            remaining_taxable_income -= income_in_slab
+        
+
+    return schemas.tax.TaxSummaryResponse(
+        gross_income=gross_income,
+        deductions=total_deductions,
+        taxable_income=taxable_income,
+        tax_liability=tax_liability
+    )
+
+def create_tax_deduction(db: Session, deduction: schemas.tax.TaxDeductionCreate, user_id: int):
+    db_deduction = models.TaxDeduction(**deduction.dict(), user_id=user_id)
+    db.add(db_deduction)
+    db.commit()
+    db.refresh(db_deduction)
+    return db_deduction
+
+def get_tax_suggestions(db: Session, user_id: int) -> schemas.tax.TaxSuggestionResponse:
+    summary = calculate_tax_summary(db, user_id)
+    suggestions = []
+
+    # Section 80C suggestions
+    deductions_80c = get_user_tax_deductions(db, user_id)
+    total_80c_deductions = sum(d.amount for d in deductions_80c)
+
+    if total_80c_deductions < settings.TAX_80C_CAP:
+        remaining_80c_limit = settings.TAX_80C_CAP - total_80c_deductions
+        suggestions.append(f"Invest up to ₹{remaining_80c_limit:.0f} in Section 80C instruments (PPF, ELSS, Insurance).")
+    
+    # Example: NPS (Section 80CCD(1B)) suggestion
+    suggestions.append("Consider NPS contributions under Section 80CCD(1B) for an extra ₹50,000 deduction.")
+
+    return schemas.tax.TaxSuggestionResponse(suggestions=suggestions)

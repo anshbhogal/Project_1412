@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import engine, Base
-from .routes import auth, transactions, tax, investments, forecasts, recommendations
+from .routes import auth, transactions, investments, forecasts, recommendations, tax
 
 Base.metadata.create_all(bind=engine)
 
@@ -22,10 +22,10 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(transactions.router, prefix="/transactions", tags=["Transactions"])
-app.include_router(tax.router, prefix="/tax", tags=["Tax"])
 app.include_router(investments.router, prefix="/investments", tags=["Investments"])
-app.include_router(forecasts.router, prefix="/forecast", tags=["Forecasts"])
+app.include_router(forecasts.router, prefix="/forecasts", tags=["Forecasts"])
 app.include_router(recommendations.router, prefix="/recommendations", tags=["Recommendations"])
+app.include_router(tax.router, prefix="/tax", tags=["Tax"])
 
 @app.get("/")
 def read_root():
