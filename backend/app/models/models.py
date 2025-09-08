@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from datetime import datetime
 
 from ..database import Base
 
@@ -35,8 +36,8 @@ class Investment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    type = Column(String, nullable=False)
-    name = Column(String, nullable=False)
+    type = Column(String, index=True, nullable=False)
+    name = Column(String, index=True, nullable=False)
     units = Column(Float, nullable=False)
     buy_price = Column(Float, nullable=False)
     current_price = Column(Float, nullable=False)
