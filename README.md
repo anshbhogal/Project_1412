@@ -59,6 +59,84 @@ Provides rule-based tax-saving suggestions for the user.
 }
 ```
 
+### Investments Module
+
+The Investments module allows users to track their investments, view portfolio performance, and get allocation insights.
+
+#### Endpoints
+
+##### `POST /investments`
+
+Add a new investment for the logged-in user.
+
+**Example Request:**
+
+```json
+{
+  "type": "Stock",
+  "name": "Infosys",
+  "units": 10,
+  "buy_price": 1400,
+  "current_price": 1550
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "id": 1,
+  "type": "Stock",
+  "name": "Infosys",
+  "units": 10,
+  "buy_price": 1400,
+  "current_price": 1550,
+  "user_id": 123,
+  "created_at": "2023-10-27T10:00:00.000Z"
+}
+```
+
+##### `GET /investments`
+
+Fetch all investments for the logged-in user. Supports optional filter by type.
+
+**Example Response:**
+
+```json
+[
+  {
+    "id": 1,
+    "type": "Stock",
+    "name": "Infosys",
+    "units": 10,
+    "buy_price": 1400,
+    "current_price": 1550,
+    "user_id": 123,
+    "created_at": "2023-10-27T10:00:00.000Z"
+  }
+]
+```
+
+##### `GET /investments/performance`
+
+Returns portfolio performance analysis.
+
+**Example Response:**
+
+```json
+{
+  "total_invested": 250000,
+  "current_value": 275000,
+  "pnl": 25000,
+  "allocations": {
+    "Stock": 60,
+    "Mutual Fund": 30,
+    "Gold": 10
+  }
+}
+```
+
 ## Progress Log
 
 - [2025-09-05] Implemented Tax Management module (summary, deductions, suggestions).
+- [2025-09-05] Implemented Investments module (CRUD + performance analysis).
