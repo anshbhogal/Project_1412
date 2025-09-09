@@ -136,7 +136,89 @@ Returns portfolio performance analysis.
 }
 ```
 
+## Forecasting Module
+
+The Forecasting module predicts future expenses, incomes, and cashflow trends using historical transaction data.
+
+#### Endpoints
+
+##### `GET /forecasting/expenses`
+
+Returns predicted monthly expenses for the next 3-6 months. Requires JWT authentication.
+
+**Example Request:**
+
+```
+GET /forecasting/expenses?months=3
+Authorization: Bearer <your_jwt_token>
+```
+
+**Example Response:**
+
+```json
+{
+  "forecasts": [
+    { "month": "2023-05", "predicted_value": 150.75 },
+    { "month": "2023-06", "predicted_value": 150.75 },
+    { "month": "2023-07", "predicted_value": 150.75 }
+  ]
+}
+```
+
+##### `GET /forecasting/income`
+
+Returns predicted monthly income for the next 3-6 months. Requires JWT authentication.
+
+**Example Request:**
+
+```
+GET /forecasting/income?months=6
+Authorization: Bearer <your_jwt_token>
+```
+
+**Example Response:**
+
+```json
+{
+  "forecasts": [
+    { "month": "2023-05", "predicted_value": 1533.33 },
+    { "month": "2023-06", "predicted_value": 1533.33 },
+    { "month": "2023-07", "predicted_value": 1533.33 },
+    { "month": "2023-08", "predicted_value": 1533.33 },
+    { "month": "2023-09", "predicted_value": 1533.33 },
+    { "month": "2023-10", "predicted_value": 1533.33 }
+  ]
+}
+```
+
+##### `GET /forecasting/cashflow`
+
+Returns projected net cashflow (income - expenses) for the next 3-6 months. Requires JWT authentication.
+
+**Example Request:**
+
+```
+GET /forecasting/cashflow
+Authorization: Bearer <your_jwt_token>
+```
+
+**Example Response:**
+
+```json
+{
+  "forecasts": [
+    { "month": "2023-05", "predicted_value": 1382.58 },
+    { "month": "2023-06", "predicted_value": 1382.58 },
+    { "month": "2023-07", "predicted_value": 1382.58 },
+    { "month": "2023-08", "predicted_value": 1382.58 },
+    { "month": "2023-09", "predicted_value": 1382.58 },
+    { "month": "2023-10", "predicted_value": 1382.58 }
+  ]
+}
+```
+
 ## Progress Log
 
 - [2025-09-05] Implemented Tax Management module (summary, deductions, suggestions).
 - [2025-09-05] Implemented Investments module (CRUD + performance analysis).
+- [2025-09-09] Implemented Forecasting Module (Phase 4): expense, income, and cashflow prediction endpoints with ML-based services.
