@@ -217,8 +217,106 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
+## Recommendations Module
+
+The Recommendations module generates personalized insights and suggestions based on user financial data (transactions, taxes, investments, and forecasts). Recommendations are currently rule-based, with an architecture designed for future integration of ML models.
+
+#### Endpoints
+
+##### `GET /recommendations/expenses`
+
+Suggests ways to cut down overspending based on transaction history. Requires JWT authentication.
+
+**Example Request:**
+
+```
+GET /recommendations/expenses
+Authorization: Bearer <your_jwt_token>
+```
+
+**Example Response:**
+
+```json
+{
+  "category": "expenses",
+  "suggestions": [
+    "Your expenses this month ($XXX.XX) are significantly higher than your average monthly expenses ($YYY.YY). Consider reviewing your spending to identify areas for cutbacks.",
+    "You spend the most on 'Food' ($ZZZ.ZZ). Look for alternatives or set a budget for this category."
+  ]
+}
+```
+
+##### `GET /recommendations/tax`
+
+Provides tax-saving suggestions based on configured deduction rules and user's current deductions. Requires JWT authentication.
+
+**Example Request:**
+
+```
+GET /recommendations/tax
+Authorization: Bearer <your_jwt_token>
+```
+
+**Example Response:**
+
+```json
+{
+  "category": "tax",
+  "suggestions": [
+    "You have utilized $XXX.XX in deductions. Consider investing in Section 80C instruments like PPF, ELSS, and life insurance to save more tax (up to $150,000).",
+    "Explore National Pension System (NPS) contributions under Section 80CCD(1B) for an additional deduction of up to $50,000."
+  ]
+}
+```
+
+##### `GET /recommendations/investments`
+
+Recommends portfolio improvements such as diversification or rebalancing based on investment data. Requires JWT authentication.
+
+**Example Request:**
+
+```
+GET /recommendations/investments
+Authorization: Bearer <your_jwt_token>
+```
+
+**Example Response:**
+
+```json
+{
+  "category": "investments",
+  "suggestions": [
+    "Your portfolio is concentrated in X asset types. Consider diversifying across more asset classes like stocks, bonds, and real estate.",
+    "You have Y investments currently at a loss. Review these positions and consider whether to hold or rebalance."
+  ]
+}
+```
+
+##### `GET /recommendations/cashflow`
+
+Alerts the user about potential negative cashflow based on forecasting data. Requires JWT authentication.
+
+**Example Request:**
+
+```
+GET /recommendations/cashflow
+Authorization: Bearer <your_jwt_token>
+```
+
+**Example Response:**
+
+```json
+{
+  "category": "cashflow",
+  "suggestions": [
+    "Alert: Your projected cashflow for YYYY-MM is negative ($-XXX.XX). Review your upcoming expenses and income to avoid a shortfall."
+  ]
+}
+```
+
 ## Progress Log
 
 - [2025-09-05] Implemented Tax Management module (summary, deductions, suggestions).
 - [2025-09-05] Implemented Investments module (CRUD + performance analysis).
 - [2025-09-09] Implemented Forecasting Module (Phase 4): expense, income, and cashflow prediction endpoints with ML-based services.
+- [2025-09-11] Implemented Recommendations Module (Phase 5): added endpoints for expenses, tax, investments, and cashflow suggestions.
