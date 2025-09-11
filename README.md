@@ -320,3 +320,4 @@ Authorization: Bearer <your_jwt_token>
 - [2025-09-05] Implemented Investments module (CRUD + performance analysis).
 - [2025-09-09] Implemented Forecasting Module (Phase 4): expense, income, and cashflow prediction endpoints with ML-based services.
 - [2025-09-11] Implemented Recommendations Module (Phase 5): added endpoints for expenses, tax, investments, and cashflow suggestions.
+- [2025-09-11] Implemented frontend–backend API integration layer with Axios and JWT handling.
