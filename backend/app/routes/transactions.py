@@ -7,17 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, 
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
-from ..database import SessionLocal
-from .auth import get_current_user
+from ..dependencies import get_db, get_current_user
 
 router = APIRouter()
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.post("/upload", response_model=List[schemas.Transaction])
 def upload_transactions(

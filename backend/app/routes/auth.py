@@ -1,23 +1,16 @@
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
-from ..database import SessionLocal
+from ..dependencies import get_db, get_current_user
 from ..utils import auth as auth_utils
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-@router.post("/signup", response_model=schemas.User)
+@router.post("/signup", response_model=schemas.UserResponse)
 def signup_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
@@ -45,28 +38,6 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-# Dependency to get the current user from the token
-from fastapi.security import OAuth2PasswordBearer
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    payload = auth_utils.verify_token(token)
-    if payload is None:
-        raise credentials_exception
-    email: str = payload.get("sub")
-    if email is None:
-        raise credentials_exception
-    user = db.query(models.User).filter(models.User.email == email).first()
-    if user is None:
-        raise credentials_exception
-    return user
-
-@router.get("/me", response_model=schemas.User)
-def read_users_me(current_user: schemas.User = Depends(get_current_user)):
+@router.get("/me", response_model=schemas.UserResponse)
+def read_users_me(current_user: schemas.UserResponse = Depends(get_current_user)):
     return current_user
