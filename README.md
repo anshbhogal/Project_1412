@@ -389,6 +389,10 @@ const fetchTransactions = async () => {
 *   **Vite not found**: Ensure you are in the `frontend/` directory, run `npm install`, or explicitly install `vite` as a dev dependency (`npm install vite --save-dev`).
 *   **Backend/frontend connection issues**: Verify the `baseURL` in `frontend/src/api/index.js` or your `.env` file matches the backend server address (`http://localhost:8000` or `http://127.0.0.1:8000`).
 
+## Dependencies Module
+
+The `backend/app/dependencies.py` file now centralizes common FastAPI dependencies such as `get_db` (for database session management) and `get_current_user` (for JWT authentication). This promotes code reusability and maintainability across various routes and services.
+
 ## Integration Verification
 
 To confirm that the frontend and backend can communicate end-to-end, follow these steps:
@@ -423,3 +427,4 @@ To confirm that the frontend and backend can communicate end-to-end, follow thes
 - [2025-09-11] Implemented frontend–backend API integration layer with Axios and JWT handling.
 - [2025-09-11] Added Setup & Troubleshooting guide to README.md.
 - [2025-09-13] Added Integration Verification steps to README.md.
+- [2025-09-13] Centralized FastAPI dependencies in `backend/app/dependencies.py` and updated all relevant imports.
