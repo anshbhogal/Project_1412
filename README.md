@@ -314,6 +314,81 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
+### Frontend–Backend Integration Layer
+
+The frontend communicates with the FastAPI backend using a centralized Axios instance configured in `frontend/src/api/index.js`.
+JWT authentication tokens are automatically attached to outgoing requests from `localStorage`.
+Unauthorized (401) responses are handled by clearing the local token and (in a production setup) redirecting to the login page.
+
+**API Service Files:**
+*   `frontend/src/api/auth.js`: Handles user signup, login, fetching current user details, and logout.
+*   `frontend/src/api/transactions.js`: Provides CRUD operations for transactions and transaction file uploads.
+*   `frontend/src/api/tax.js`: Includes functions for fetching tax summaries, adding deductions, and retrieving tax-saving suggestions.
+*   `frontend/src/api/investments.js`: Manages adding investments, listing all investments, and fetching portfolio performance.
+*   `frontend/src/api/forecasting.js`: Offers endpoints for retrieving expense, income, and cashflow predictions.
+*   `frontend/src/api/recommendations.js`: Fetches personalized suggestions for expenses, tax, investments, and cashflow.
+
+**Example Usage (e.g., in a React component):**
+
+```javascript
+import { getTransactions } from '../api/transactions';
+
+// ... inside an async function or useEffect
+const fetchTransactions = async () => {
+  try {
+    const data = await getTransactions();
+    console.log('Transactions:', data);
+  } catch (error) {
+    console.error('Failed to fetch transactions:', error);
+  }
+};
+```
+
+## Setup & Troubleshooting
+
+### Backend Setup
+
+*   Install Python 3.12+
+*   Create and activate a virtual environment (venv):
+
+    ```bash
+    python -m venv venv
+    venv\Scripts\activate   # on Windows
+    source venv/bin/activate # on Mac/Linux
+    ```
+*   Install dependencies with `pip install -r requirements.txt`
+*   If you encounter `ModuleNotFoundError: No module named 'pydantic_settings'`, fix it by running:
+
+    ```bash
+    python -m pip install pydantic-settings
+    ```
+*   Run the server:
+
+    ```bash
+    python -m uvicorn app.main:app --reload
+    ```
+
+### Frontend Setup
+
+*   Install Node.js 18+
+*   Navigate to the `frontend/` directory and run:
+
+    ```bash
+    npm install
+    npm run dev
+    ```
+*   If you encounter the error `'vite' is not recognized`, fix it by running:
+
+    ```bash
+    npm install vite --save-dev
+    ```
+
+### Common Errors & Fixes
+
+*   **Python module not found**: Check your virtual environment setup, install the missing package, and update `requirements.txt`.
+*   **Vite not found**: Ensure you are in the `frontend/` directory, run `npm install`, or explicitly install `vite` as a dev dependency (`npm install vite --save-dev`).
+*   **Backend/frontend connection issues**: Verify the `baseURL` in `frontend/src/api/index.js` or your `.env` file matches the backend server address (`http://localhost:8000` or `http://127.0.0.1:8000`).
+
 ## Progress Log
 
 - [2025-09-05] Implemented Tax Management module (summary, deductions, suggestions).
@@ -321,3 +396,4 @@ Authorization: Bearer <your_jwt_token>
 - [2025-09-09] Implemented Forecasting Module (Phase 4): expense, income, and cashflow prediction endpoints with ML-based services.
 - [2025-09-11] Implemented Recommendations Module (Phase 5): added endpoints for expenses, tax, investments, and cashflow suggestions.
 - [2025-09-11] Implemented frontend–backend API integration layer with Axios and JWT handling.
+- [2025-09-11] Added Setup & Troubleshooting guide to README.md.
