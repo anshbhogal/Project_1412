@@ -30,3 +30,7 @@ app.include_router(tax.router, prefix="/tax", tags=["Tax"])
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Financial Management Dashboard API!"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}

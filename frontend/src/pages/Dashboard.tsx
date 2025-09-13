@@ -4,10 +4,30 @@ import { ExpenseChart } from "@/components/charts/ExpenseChart";
 import { IncomeExpenseChart } from "@/components/charts/IncomeExpenseChart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { healthCheck } from "../api/healthService";
 
 export default function Dashboard() {
+  const [backendStatus, setBackendStatus] = useState("pending...");
+
+  useEffect(() => {
+    healthCheck()
+      .then((data) => setBackendStatus(data.status))
+      .catch(() => setBackendStatus("error"));
+  }, []);
+
   return (
     <div className="space-y-6">
+      {/* Health Check Display */}
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold">Backend Health Check</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Status: <span className="font-bold">{backendStatus}</span></p>
+        </CardContent>
+      </Card>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
