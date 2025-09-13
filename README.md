@@ -389,6 +389,31 @@ const fetchTransactions = async () => {
 *   **Vite not found**: Ensure you are in the `frontend/` directory, run `npm install`, or explicitly install `vite` as a dev dependency (`npm install vite --save-dev`).
 *   **Backend/frontend connection issues**: Verify the `baseURL` in `frontend/src/api/index.js` or your `.env` file matches the backend server address (`http://localhost:8000` or `http://127.0.0.1:8000`).
 
+## Integration Verification
+
+To confirm that the frontend and backend can communicate end-to-end, follow these steps:
+
+1.  **Start the Backend:**
+    Navigate to the project root directory (`D:\Github_Repos\Project_1412`) and run:
+
+    ```bash
+    python -m uvicorn backend.app.main:app --reload
+    ```
+
+2.  **Start the Frontend:**
+    Open a **new terminal** (or ensure the backend command is running in the background) and navigate to the `frontend/` directory:
+
+    ```bash
+    cd frontend/
+    npm run dev
+    ```
+
+3.  **Open & Verify in Browser:**
+    Open your web browser and go to `http://localhost:5173`. On the Dashboard page, you should see a "Backend Health Check" card.
+
+4.  **Confirmation:**
+    If the frontend displays: `Status: ok` within the "Backend Health Check" card, then the integration is successfully verified!
+
 ## Progress Log
 
 - [2025-09-05] Implemented Tax Management module (summary, deductions, suggestions).
@@ -397,3 +422,4 @@ const fetchTransactions = async () => {
 - [2025-09-11] Implemented Recommendations Module (Phase 5): added endpoints for expenses, tax, investments, and cashflow suggestions.
 - [2025-09-11] Implemented frontend–backend API integration layer with Axios and JWT handling.
 - [2025-09-11] Added Setup & Troubleshooting guide to README.md.
+- [2025-09-13] Added Integration Verification steps to README.md.

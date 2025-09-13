@@ -3,25 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr
 
-class UserBase(BaseModel):
-    email: EmailStr
-
-class UserCreate(UserBase):
-    password: str
-
-class UserInDBBase(UserBase):
-    id: int
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class User(UserInDBBase):
-    pass
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+# Keep general schemas here like Token, TokenData, etc., if needed
 
 class Token(BaseModel):
     access_token: str
