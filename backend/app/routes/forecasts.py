@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from ..dependencies import get_db, get_current_user
-from backend.app.schemas.forecasting import ForecastRequest, ForecastResponseList
-from backend.app.services import forecasting_service
-from backend.app.schemas.user import UserResponse # Assuming User is now UserResponse
+from .. import models
+from ..schemas.forecasting import ForecastRequest, ForecastResponseList
+from ..services import forecasting_service
+from ..schemas.user import UserResponse
 
 router = APIRouter(prefix="/forecasting", tags=["Forecasting"])
 
