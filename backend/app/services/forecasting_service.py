@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import date
 from typing import List
 
-from backend.app.models.transaction import Transaction
+from ..models.models import Transaction
 from backend.app.schemas.forecasting import ForecastResponse
 
 
