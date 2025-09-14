@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
 from .database import SessionLocal
-from . import models, schemas
+from .schemas import schemas
+from .models.models import User
 from .utils.auth import oauth2_scheme
 from .config import settings
 
@@ -30,7 +31,7 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = db.query(User).filter(User.email == email).first()
     if user is None:
         raise credentials_exception
     return user

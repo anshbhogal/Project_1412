@@ -16,14 +16,28 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     try {
-      const response = await apiClient.post("/auth/login", {
-        username: email,
-        password: password,
-      });
+      const response = await apiClient.post(
+        "/auth/login",
+        new URLSearchParams({
+          username: email,
+          password: password,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
       localStorage.setItem("jwt_token", response.data.access_token);
       navigate("/"); // Redirect to dashboard or home page
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Login failed");
+      const errorMessage =
+        err.response?.data?.detail || "Login failed";
+      if (Array.isArray(errorMessage)) {
+        setError(errorMessage.map((e) => e.msg).join(", "));
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 

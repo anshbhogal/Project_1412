@@ -6,15 +6,18 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status
 from sqlalchemy.orm import Session
 
-from .. import models, schemas
+from ..schemas import schemas
+from ..schemas.user import User
+from ..schemas.schemas import Transaction, TransactionCreate, TransactionUpdate
+from ..models.models import Transaction as ModelTransaction
 from ..dependencies import get_db, get_current_user
 
 router = APIRouter()
 
-@router.post("/upload", response_model=List[schemas.Transaction])
+@router.post("/upload", response_model=List[Transaction])
 def upload_transactions(
     file: UploadFile = File(...),
-    current_user: schemas.User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     if not file.filename.endswith(('.csv', '.xlsx')):
@@ -37,8 +40,8 @@ def upload_transactions(
                 "category": row["category"],
                 "source": row.get("source"),
             }
-            transaction = schemas.TransactionCreate(**transaction_data)
-            db_transaction = models.Transaction(**transaction.model_dump(), user_id=current_user.id)
+            transaction = TransactionCreate(**transaction_data)
+            db_transaction = ModelTransaction(**transaction.model_dump(), user_id=current_user.id)
             transactions_to_create.append(db_transaction)
 
         db.add_all(transactions_to_create)
@@ -50,21 +53,21 @@ def upload_transactions(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {e}")
 
-@router.post("/", response_model=schemas.Transaction)
+@router.post("/", response_model=Transaction)
 def create_transaction(
-    transaction: schemas.TransactionCreate,
-    current_user: schemas.User = Depends(get_current_user),
+    transaction: TransactionCreate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    db_transaction = models.Transaction(**transaction.model_dump(), user_id=current_user.id)
+    db_transaction = ModelTransaction(**transaction.model_dump(), user_id=current_user.id)
     db.add(db_transaction)
     db.commit()
     db.refresh(db_transaction)
     return db_transaction
 
-@router.get("/", response_model=List[schemas.Transaction])
+@router.get("/", response_model=List[Transaction])
 def read_transactions(
-    current_user: schemas.User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
@@ -73,28 +76,28 @@ def read_transactions(
     category: Optional[str] = Query(None),
     merchant: Optional[str] = Query(None),
 ):
-    query = db.query(models.Transaction).filter(models.Transaction.user_id == current_user.id)
+    query = db.query(ModelTransaction).filter(ModelTransaction.user_id == current_user.id)
     if start_date:
-        query = query.filter(models.Transaction.date >= start_date)
+        query = query.filter(ModelTransaction.date >= start_date)
     if end_date:
-        query = query.filter(models.Transaction.date <= end_date)
+        query = query.filter(ModelTransaction.date <= end_date)
     if category:
-        query = query.filter(models.Transaction.category == category)
+        query = query.filter(ModelTransaction.category == category)
     if merchant:
-        query = query.filter(models.Transaction.merchant.ilike(f"%{merchant}%"))
+        query = query.filter(ModelTransaction.merchant.ilike(f"%{merchant}%"))
     transactions = query.offset(skip).limit(limit).all()
     return transactions
 
-@router.put("/{transaction_id}", response_model=schemas.Transaction)
+@router.put("/{transaction_id}", response_model=Transaction)
 def update_transaction(
     transaction_id: int,
-    transaction: schemas.TransactionUpdate,
-    current_user: schemas.User = Depends(get_current_user),
+    transaction: TransactionUpdate,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     db_transaction = (
-        db.query(models.Transaction)
-        .filter(models.Transaction.id == transaction_id, models.Transaction.user_id == current_user.id)
+        db.query(ModelTransaction)
+        .filter(ModelTransaction.id == transaction_id, ModelTransaction.user_id == current_user.id)
         .first()
     )
     if not db_transaction:
@@ -111,12 +114,12 @@ def update_transaction(
 @router.delete("/{transaction_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_transaction(
     transaction_id: int,
-    current_user: schemas.User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     db_transaction = (
-        db.query(models.Transaction)
-        .filter(models.Transaction.id == transaction_id, models.Transaction.user_id == current_user.id)
+        db.query(ModelTransaction)
+        .filter(ModelTransaction.id == transaction_id, ModelTransaction.user_id == current_user.id)
         .first()
     )
     if not db_transaction:

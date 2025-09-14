@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from ..schemas.user import UserCreate, UserResponse
+from ..schemas.schemas import Token
 from ..models.models import User
 from ..dependencies import get_db, get_current_user
 from ..utils import auth as auth_utils
@@ -24,7 +25,7 @@ def signup_user(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(db_user)
     return db_user
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not auth_utils.verify_password(form_data.password, user.password_hash):
