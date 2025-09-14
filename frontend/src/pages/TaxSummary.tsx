@@ -80,7 +80,7 @@ export default function TaxSummary() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              {taxSummary ? <AnimatedNumber value={taxSummary.tax_liability} prefix="$" /> : "Loading..."}
+              {taxSummary ? <AnimatedNumber value={taxSummary.tax_liability} prefix="₹" /> : "Loading..."}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               Due in <span className="font-semibold">Y</span> days (placeholder)
