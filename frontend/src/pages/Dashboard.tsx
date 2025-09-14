@@ -8,14 +8,20 @@ import { useEffect, useState } from "react";
 import { healthCheck } from "../api/healthService";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { motion } from "framer-motion";
+import { getTransactions } from "../api/transactions";
 
 export default function Dashboard() {
   const [backendStatus, setBackendStatus] = useState("pending...");
+  const [recentTransactions, setRecentTransactions] = useState([]);
 
   useEffect(() => {
     healthCheck()
       .then((data) => setBackendStatus(data.status))
       .catch(() => setBackendStatus("error"));
+
+    getTransactions()
+      .then((data) => setRecentTransactions(data.slice(0, 5))) // Get latest 5 transactions
+      .catch((error) => console.error("Error fetching recent transactions:", error));
   }, []);
 
   const cardVariants = {
@@ -216,25 +222,23 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[
-                  { description: "Grocery Store", amount: "-$89.50", date: "Today", category: "Food" },
-                  { description: "Salary Deposit", amount: "+$3,200.00", date: "Yesterday", category: "Income" },
-                  { description: "Electric Bill", amount: "-$125.30", date: "2 days ago", category: "Utilities" },
-                  { description: "Gas Station", amount: "-$45.20", date: "3 days ago", category: "Transportation" },
-                  { description: "Investment Return", amount: "+$156.80", date: "4 days ago", category: "Investment" },
-                ].map((transaction, index) => (
-                  <div key={index} className="flex items-center justify-between py-2 border-b border-muted-dark last:border-b-0">
-                    <div>
-                      <p className="font-medium text-card-foreground">{transaction.description}</p>
-                      <p className="text-sm text-muted-foreground">{transaction.date} • {transaction.category}</p>
+                {recentTransactions.length > 0 ? (
+                  recentTransactions.map((transaction, index) => (
+                    <div key={index} className="flex items-center justify-between py-2 border-b border-muted-dark last:border-b-0">
+                      <div>
+                        <p className="font-medium text-card-foreground">{transaction.merchant}</p>
+                        <p className="text-sm text-muted-foreground">{new Date(transaction.date).toLocaleDateString()} • {transaction.category}</p>
+                      </div>
+                      <span className={`font-semibold ${
+                        transaction.amount < 0 ? 'text-danger' : 'text-success'
+                      }`}>
+                        {transaction.amount < 0 ? '-' : '+'}${Math.abs(transaction.amount).toFixed(2)}
+                      </span>
                     </div>
-                    <span className={`font-semibold ${
-                      transaction.amount.startsWith('+') ? 'text-success' : 'text-danger'
-                    }`}>
-                      {transaction.amount}
-                    </span>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">No recent transactions found. Add some to get started!</p>
+                )}
               </div>
             </CardContent>
           </Card>

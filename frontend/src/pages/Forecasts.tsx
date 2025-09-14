@@ -1,27 +1,14 @@
+import { useEffect, useState } from "react";
 import { Lightbulb } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area } from 'recharts';
+import { getForecastCashflow } from "../api/forecasts";
 
-const forecastData = [
-  { month: "Jan", savings: 1000 },
-  { month: "Feb", savings: 1200 },
-  { month: "Mar", savings: 1500 },
-  { month: "Apr", savings: 1700 },
-  { month: "May", savings: 2000 },
-  { month: "Jun", savings: 2300 },
-  { month: "Jul", savings: 2600 },
-  { month: "Aug", savings: 2900 },
-  { month: "Sep", savings: 3200 },
-  { month: "Oct", savings: 3500 },
-  { month: "Nov", savings: 3800 },
-  { month: "Dec", savings: 4100 },
-];
-
-function SavingsForecastChart() {
+function SavingsForecastChart({ data }) {
   return (
     <ResponsiveContainer width="100%" height={300}>
       <AreaChart
-        data={forecastData}
+        data={data}
         margin={{
           top: 10,
           right: 30,
@@ -42,7 +29,7 @@ function SavingsForecastChart() {
           labelStyle={{ color: 'hsl(var(--foreground))' }}
           itemStyle={{ color: 'hsl(var(--foreground))' }}
         />
-        <Area type="monotone" dataKey="savings" stroke="hsl(var(--primary))" fill="url(#colorSavings)" />
+        <Area type="monotone" dataKey="predicted_value" stroke="hsl(var(--primary))" fill="url(#colorSavings)" name="Projected Savings" />
         <defs>
           <linearGradient id="colorSavings" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
@@ -55,6 +42,28 @@ function SavingsForecastChart() {
 }
 
 export default function Forecasts() {
+  const [cashflowForecasts, setCashflowForecasts] = useState([]);
+  const [sixMonthSavings, setSixMonthSavings] = useState(0);
+  const [twelveMonthSavings, setTwelveMonthSavings] = useState(0);
+
+  useEffect(() => {
+    const fetchForecasts = async () => {
+      try {
+        const data = await getForecastCashflow(12); // Fetch 12 months of cashflow
+        setCashflowForecasts(data);
+
+        const totalSixMonthSavings = data.slice(0, 6).reduce((sum, f) => sum + f.predicted_value, 0);
+        setSixMonthSavings(totalSixMonthSavings);
+
+        const totalTwelveMonthSavings = data.reduce((sum, f) => sum + f.predicted_value, 0);
+        setTwelveMonthSavings(totalTwelveMonthSavings);
+      } catch (error) {
+        console.error("Error fetching cashflow forecasts:", error);
+      }
+    };
+    fetchForecasts();
+  }, []);
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -69,7 +78,7 @@ export default function Forecasts() {
           <CardTitle className="text-lg font-semibold">Projected Savings</CardTitle>
         </CardHeader>
         <CardContent>
-          <SavingsForecastChart />
+          {cashflowForecasts.length > 0 ? <SavingsForecastChart data={cashflowForecasts} /> : <p className="text-muted-foreground">Loading forecast data...</p>}
         </CardContent>
       </Card>
 
@@ -80,7 +89,7 @@ export default function Forecasts() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            At your current spending rate, you are projected to save <span className="font-semibold text-primary">$X</span> in the next 6 months and <span className="font-semibold text-primary">$Y</span> in the next 12 months. Consider increasing your contributions by Z% to reach your goals faster.
+            At your current spending rate, you are projected to save <span className="font-semibold text-primary">${sixMonthSavings.toFixed(2)}</span> in the next 6 months and <span className="font-semibold text-primary">${twelveMonthSavings.toFixed(2)}</span> in the next 12 months. Consider increasing your contributions by Z% to reach your goals faster.
           </p>
         </CardContent>
       </Card>

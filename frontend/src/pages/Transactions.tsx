@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Filter, Plus, Download, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,63 +23,25 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-
-const transactions = [
-  {
-    id: 1,
-    date: "2024-01-15",
-    merchant: "Whole Foods Market",
-    amount: -89.50,
-    category: "Food & Dining",
-    notes: "Weekly groceries",
-    status: "completed"
-  },
-  {
-    id: 2,
-    date: "2024-01-14",
-    merchant: "ABC Company",
-    amount: 3200.00,
-    category: "Income",
-    notes: "Monthly salary",
-    status: "completed"
-  },
-  {
-    id: 3,
-    date: "2024-01-13",
-    merchant: "Electric Company",
-    amount: -125.30,
-    category: "Bills & Utilities",
-    notes: "Monthly electric bill",
-    status: "completed"
-  },
-  {
-    id: 4,
-    date: "2024-01-12",
-    merchant: "Shell Gas Station",
-    amount: -45.20,
-    category: "Transportation",
-    notes: "Gas fill-up",
-    status: "completed"
-  },
-  {
-    id: 5,
-    date: "2024-01-11",
-    merchant: "Netflix",
-    amount: -15.99,
-    category: "Entertainment",
-    notes: "Monthly subscription",
-    status: "pending"
-  },
-];
+import { getTransactions } from "../api/transactions";
 
 export default function Transactions() {
+  const [transactions, setTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [dateRange, setDateRange] = useState<Date | undefined>(undefined);
 
+  useEffect(() => {
+    getTransactions()
+      .then((data) => setTransactions(data))
+      .catch((error) => console.error("Error fetching transactions:", error));
+  }, []);
+
   const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         transaction.notes.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (
+      transaction.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (transaction.notes && transaction.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
     const matchesCategory = categoryFilter === "all" || transaction.category === categoryFilter;
     const matchesDate = dateRange ? new Date(transaction.date).toDateString() === dateRange.toDateString() : true;
     return matchesSearch && matchesCategory && matchesDate;
@@ -193,31 +155,39 @@ export default function Transactions() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTransactions.map((transaction) => (
-                <TableRow key={transaction.id} className="hover:bg-muted/50">
-                  <TableCell className="font-medium">
-                    {new Date(transaction.date).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>{transaction.merchant}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{transaction.category}</Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {transaction.notes}
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={transaction.status === "completed" ? "default" : "secondary"}
-                      className={transaction.status === "completed" ? "bg-success text-success-foreground" : ""}
-                    >
-                      {transaction.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className={`text-right font-semibold ${getAmountColor(transaction.amount)}`}>
-                    {formatAmount(transaction.amount)}
+              {filteredTransactions.length > 0 ? (
+                filteredTransactions.map((transaction) => (
+                  <TableRow key={transaction.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">
+                      {new Date(transaction.date).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{transaction.merchant}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{transaction.category}</Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {transaction.notes}
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={transaction.status === "completed" ? "default" : "secondary"}
+                        className={transaction.status === "completed" ? "bg-success text-success-foreground" : ""}
+                      >
+                        {transaction.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className={`text-right font-semibold ${getAmountColor(transaction.amount)}`}>
+                      {formatAmount(transaction.amount)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    No transactions found for the selected filters.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

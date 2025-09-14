@@ -1,7 +1,9 @@
-import { Lightbulb, TrendingUp, ShieldAlert } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Lightbulb, TrendingUp, ShieldAlert, DollarSign, Wallet, Percent, Home } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { getExpenseRecommendations, getTaxRecommendations, getInvestmentRecommendations, getCashflowRecommendations } from "../api/recommendations";
 
 interface RecommendationCardProps {
   icon: React.ReactNode;
@@ -36,44 +38,60 @@ function RecommendationCard({ icon, title, description, link }: RecommendationCa
 }
 
 export default function Recommendations() {
-  const recommendationsData = [
-    {
-      icon: <Lightbulb className="h-5 w-5 text-accent" />,
-      title: "Emergency Fund Tip",
-      description: "Consider saving 3-6 months of living expenses in an easily accessible account.",
-      link: "/tips/emergency-fund",
-    },
-    {
-      icon: <TrendingUp className="h-5 w-5 text-success" />,
-      title: "Investment Idea: Diversify Portfolio",
-      description: "Explore adding low-cost index funds to balance your investment risks.",
-      link: "/investments/diversify",
-    },
-    {
-      icon: <ShieldAlert className="h-5 w-5 text-danger" />,
-      title: "Risk Alert: High Credit Card Debt",
-      description: "Focus on paying down high-interest credit card debt to improve your financial health.",
-      link: "/debts/credit-card",
-    },
-    {
-      icon: <Lightbulb className="h-5 w-5 text-primary" />,
-      title: "Budgeting Insight",
-      description: "Track your spending categories to identify areas where you can save more.",
-      link: "/tips/budgeting",
-    },
-    {
-      icon: <TrendingUp className="h-5 w-5 text-primary" />,
-      title: "Retirement Planning",
-      description: "Increase your 401k contributions by 1% to take full advantage of employer match.",
-      link: "/planning/retirement",
-    },
-    {
-      icon: <ShieldAlert className="h-5 w-5 text-warning" />,
-      title: "Upcoming Bill Alert",
-      description: "You have a large utility bill due next week. Ensure funds are available.",
-      link: "/transactions/upcoming-bills",
-    },
-  ];
+  const [recommendations, setRecommendations] = useState([]);
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const [expenseRecs, taxRecs, investmentRecs, cashflowRecs] = await Promise.all([
+          getExpenseRecommendations(),
+          getTaxRecommendations(),
+          getInvestmentRecommendations(),
+          getCashflowRecommendations(),
+        ]);
+
+        const allRecommendations = [];
+
+        if (expenseRecs && expenseRecs.suggestions) {
+          expenseRecs.suggestions.forEach((desc: string) => allRecommendations.push({
+            icon: <Lightbulb className="h-5 w-5 text-accent" />,
+            title: expenseRecs.category,
+            description: desc,
+            link: "#"
+          }));
+        }
+        if (taxRecs && taxRecs.suggestions) {
+          taxRecs.suggestions.forEach((desc: string) => allRecommendations.push({
+            icon: <ShieldAlert className="h-5 w-5 text-warning" />,
+            title: taxRecs.category,
+            description: desc,
+            link: "#"
+          }));
+        }
+        if (investmentRecs && investmentRecs.suggestions) {
+          investmentRecs.suggestions.forEach((desc: string) => allRecommendations.push({
+            icon: <TrendingUp className="h-5 w-5 text-success" />,
+            title: investmentRecs.category,
+            description: desc,
+            link: "#"
+          }));
+        }
+        if (cashflowRecs && cashflowRecs.suggestions) {
+          cashflowRecs.suggestions.forEach((desc: string) => allRecommendations.push({
+            icon: <DollarSign className="h-5 w-5 text-primary" />,
+            title: cashflowRecs.category,
+            description: desc,
+            link: "#"
+          }));
+        }
+
+        setRecommendations(allRecommendations);
+      } catch (error) {
+        console.error("Error fetching recommendations:", error);
+      }
+    };
+    fetchRecommendations();
+  }, []);
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -90,22 +108,26 @@ export default function Recommendations() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recommendationsData.map((recommendation, index) => (
-          <motion.div
-            key={index}
-            initial="hidden"
-            animate="visible"
-            variants={cardVariants}
-            transition={{ duration: 0.5, delay: index * 0.1 + 0.1 }}
-          >
-            <RecommendationCard
-              icon={recommendation.icon}
-              title={recommendation.title}
-              description={recommendation.description}
-              link={recommendation.link}
-            />
-          </motion.div>
-        ))}
+        {recommendations.length > 0 ? (
+          recommendations.map((recommendation, index) => (
+            <motion.div
+              key={index}
+              initial="hidden"
+              animate="visible"
+              variants={cardVariants}
+              transition={{ duration: 0.5, delay: index * 0.1 + 0.1 }}
+            >
+              <RecommendationCard
+                icon={recommendation.icon}
+                title={recommendation.title}
+                description={recommendation.description}
+                link={recommendation.link}
+              />
+            </motion.div>
+          ))
+        ) : (
+          <p className="text-muted-foreground">No recommendations found. Add more financial data to get personalized insights!</p>
+        )}
       </div>
     </div>
   );

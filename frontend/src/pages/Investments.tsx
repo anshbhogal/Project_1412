@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { TrendingUp, TrendingDown, DollarSign, Wallet, Percent, Home } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { ResponsiveContainer, LineChart, Line } from 'recharts';
+import { getInvestments, getInvestmentPerformance } from "../api/investments";
 
 interface InvestmentCardProps {
   title: string;
@@ -56,18 +58,28 @@ function InvestmentCard({
 }
 
 export default function Investments() {
-  const stockData = [
-    { name: "Jan", value: 100 }, { name: "Feb", value: 120 }, { name: "Mar", value: 110 },
-    { name: "Apr", value: 130 }, { name: "May", value: 150 }, { name: "Jun", value: 140 },
-  ];
-  const fdData = [
-    { name: "Jan", value: 5000 }, { name: "Feb", value: 5050 }, { name: "Mar", value: 5100 },
-    { name: "Apr", value: 5120 }, { name: "May", value: 5150 }, { name: "Jun", value: 5180 },
-  ];
-  const cryptoData = [
-    { name: "Jan", value: 1000 }, { name: "Feb", value: 950 }, { name: "Mar", value: 1050 },
-    { name: "Apr", value: 1100 }, { name: "May", value: 1080 }, { name: "Jun", value: 1200 },
-  ];
+  const [investments, setInvestments] = useState([]);
+  const [performance, setPerformance] = useState(null);
+
+  useEffect(() => {
+    const fetchInvestments = async () => {
+      try {
+        const investmentsData = await getInvestments();
+        setInvestments(investmentsData);
+        const performanceData = await getInvestmentPerformance();
+        setPerformance(performanceData);
+      } catch (error) {
+        console.error("Error fetching investment data:", error);
+      }
+    };
+    fetchInvestments();
+  }, []);
+
+  const getChangeType = (percentage: number) => {
+    if (percentage > 0) return "positive";
+    if (percentage < 0) return "negative";
+    return "neutral";
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -79,46 +91,24 @@ export default function Investments() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <InvestmentCard
-          title="Stocks"
-          value={14000}
-          percentageChange={5.23}
-          changeType="positive"
-          icon={<TrendingUp className="h-5 w-5 text-success" />}
-          sparklineData={stockData}
-        />
-        <InvestmentCard
-          title="Fixed Deposits"
-          value={52000}
-          percentageChange={0.85}
-          changeType="positive"
-          icon={<Wallet className="h-5 w-5 text-primary" />}
-          sparklineData={fdData}
-        />
-        <InvestmentCard
-          title="Crypto"
-          value={8500}
-          percentageChange={-2.10}
-          changeType="negative"
-          icon={<DollarSign className="h-5 w-5 text-danger" />}
-          sparklineData={cryptoData}
-        />
-        <InvestmentCard
-          title="Real Estate"
-          value={150000}
-          percentageChange={7.15}
-          changeType="positive"
-          icon={<Home className="h-5 w-5 text-primary" />}
-          sparklineData={stockData}
-        />
-        <InvestmentCard
-          title="Mutual Funds"
-          value={25000}
-          percentageChange={3.50}
-          changeType="positive"
-          icon={<Percent className="h-5 w-5 text-success" />}
-          sparklineData={fdData}
-        />
+        {investments.length > 0 ? (
+          investments.map((investment) => (
+            <InvestmentCard
+              key={investment.id}
+              title={investment.name}
+              value={investment.current_price * investment.units}
+              percentageChange={((investment.current_price - investment.buy_price) / investment.buy_price) * 100}
+              changeType={getChangeType( ((investment.current_price - investment.buy_price) / investment.buy_price) * 100)}
+              icon={investment.type === "Stocks" ? <TrendingUp className="h-5 w-5 text-success" /> : investment.type === "Fixed Deposits" ? <Wallet className="h-5 w-5 text-primary" /> : investment.type === "Crypto" ? <DollarSign className="h-5 w-5 text-danger" /> : <Home className="h-5 w-5 text-primary" />}
+              sparklineData={[
+                { name: "Buy", value: investment.buy_price },
+                { name: "Current", value: investment.current_price }
+              ]} // Simplified sparkline data for now
+            />
+          ))
+        ) : (
+          <p className="text-muted-foreground">No investments found. Add some to get started!</p>
+        )}
       </div>
     </div>
   );

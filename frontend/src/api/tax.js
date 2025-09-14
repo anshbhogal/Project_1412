@@ -11,16 +11,6 @@ export async function getTaxSummary() {
     }
 }
 
-export async function addTaxDeduction(deductionData) {
-    try {
-        const response = await apiClient.post('/tax/deductions', deductionData);
-        return response.data;
-    } catch (error) {
-        console.error("Error adding tax deduction:", error.response?.data || error.message);
-        throw error;
-    }
-}
-
 export async function getTaxSuggestions() {
     try {
         const response = await apiClient.get('/tax/suggestions');

@@ -1,22 +1,15 @@
+import { useEffect, useState } from "react";
 import { DollarSign, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { getTaxSummary } from "../api/tax";
 
-const taxData = [
-  { month: "Jan", liability: 500 },
-  { month: "Feb", liability: 600 },
-  { month: "Mar", liability: 750 },
-  { month: "Apr", liability: 700 },
-  { month: "May", liability: 800 },
-  { month: "Jun", liability: 900 },
-];
-
-function TaxBarChart() {
+function TaxBarChart({ data }) {
   return (
     <ResponsiveContainer width="100%" height={250}>
       <BarChart
-        data={taxData}
+        data={data}
         margin={{
           top: 5,
           right: 30,
@@ -45,7 +38,30 @@ function TaxBarChart() {
 }
 
 export default function TaxSummary() {
-  const totalLiability = taxData.reduce((sum, item) => sum + item.liability, 0);
+  const [taxSummary, setTaxSummary] = useState(null);
+  const [monthlyTaxData, setMonthlyTaxData] = useState([]);
+
+  useEffect(() => {
+    const fetchTaxSummary = async () => {
+      try {
+        const data = await getTaxSummary();
+        setTaxSummary(data);
+        // This is a placeholder for actual monthly tax data. 
+        // In a real app, the backend would provide this.
+        setMonthlyTaxData([ 
+          { month: "Jan", liability: data.tax_liability * 0.15 },
+          { month: "Feb", liability: data.tax_liability * 0.10 },
+          { month: "Mar", liability: data.tax_liability * 0.20 },
+          { month: "Apr", liability: data.tax_liability * 0.10 },
+          { month: "May", liability: data.tax_liability * 0.25 },
+          { month: "Jun", liability: data.tax_liability * 0.20 },
+        ]);
+      } catch (error) {
+        console.error("Error fetching tax summary:", error);
+      }
+    };
+    fetchTaxSummary();
+  }, []);
 
   return (
     <div className="space-y-6 p-6">
@@ -64,7 +80,7 @@ export default function TaxSummary() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              <AnimatedNumber value={totalLiability} prefix="$" />
+              {taxSummary ? <AnimatedNumber value={taxSummary.tax_liability} prefix="$" /> : "Loading..."}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               Due in <span className="font-semibold">Y</span> days (placeholder)
@@ -77,7 +93,7 @@ export default function TaxSummary() {
             <CardTitle className="text-lg font-semibold">Monthly Tax Breakdown</CardTitle>
           </CardHeader>
           <CardContent>
-            <TaxBarChart />
+            {monthlyTaxData.length > 0 ? <TaxBarChart data={monthlyTaxData} /> : <p className="text-muted-foreground">Loading chart data...</p>}
           </CardContent>
         </Card>
       </div>
