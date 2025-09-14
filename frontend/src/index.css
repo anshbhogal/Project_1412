@@ -169,4 +169,12 @@
     background-color: hsl(var(--primary));
     border-radius: 0 4px 4px 0; /* Rounded right corners */
   }
+
+  .striped-rows tbody tr:nth-child(odd) {
+    background-color: hsl(var(--muted) / 0.3);
+  }
+
+  .dark .striped-rows tbody tr:nth-child(odd) {
+    background-color: hsl(var(--muted-dark) / 0.3);
+  }
 }
