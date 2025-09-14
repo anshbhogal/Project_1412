@@ -27,5 +27,11 @@ export function AnimatedNumber({
     config: { duration: duration },
   });
 
-  return <animated.span>{number.to((n) => `${prefix}${n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${suffix}`)}</animated.span>;
+  return <animated.span>{number.to((n) => {
+    const formatter = new Intl.NumberFormat('en-IN', { // Use 'en-IN' locale for Indian Number format
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+    return `${prefix}${formatter.format(n)}${suffix}`;
+  })}</animated.span>;
 }
