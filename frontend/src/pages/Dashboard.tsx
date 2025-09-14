@@ -11,6 +11,7 @@ import { motion } from "framer-motion";
 import { getTransactions } from "../api/transactions";
 import { getFinancialSummary } from "../api/financial";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns"; // New import
+import { ManualInputCard } from "@/components/ui/ManualInputCard"; // New import
 
 interface FinancialSummaryData {
   total_income: number;
@@ -237,47 +238,17 @@ export default function Dashboard() {
 
       {/* Quick Actions & Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Actions */}
+        {/* Manual Input Card */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={cardVariants}
           transition={{ duration: 0.5, delay: 0.9 }}
         >
-          <Card className="shadow-md rounded-2xl">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
-              <div className="flex gap-2">
-                <Button variant="outline" className="rounded-full">
-                  Download Report
-                </Button>
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full">
-                  Add Transaction
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start rounded-md">
-                <DollarSign className="mr-2 h-4 w-4" />
-                Add Income
-              </Button>
-              <Button variant="outline" className="w-full justify-start rounded-md">
-                <TrendingDown className="mr-2 h-4 w-4" />
-                Record Expense
-              </Button>
-              <Button variant="outline" className="w-full justify-start rounded-md">
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Add Investment
-              </Button>
-              <Button variant="outline" className="w-full justify-start rounded-md">
-                <Wallet className="mr-2 h-4 w-4" />
-                Upload Bank Statement
-              </Button>
-            </CardContent>
-          </Card>
+          <ManualInputCard />
         </motion.div>
 
-        {/* Recent Transactions */}
+        {/* Recent Transactions (now takes up two columns) */}
         <motion.div
           initial="hidden"
           animate="visible"

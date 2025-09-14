@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from .. import schemas, models
+from .. import schemas
+from ..models.models import Transaction as ModelTransaction, TaxDeduction as ModelTaxDeduction, User as ModelUser
 from ..dependencies import get_db, get_current_user
 from ..services import tax_service
 from ..schemas.user import UserResponse

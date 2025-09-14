@@ -1,14 +1,15 @@
 from sqlalchemy.orm import Session
 from typing import List
 
-from .. import models, schemas
+from .. import schemas
+from ..models.models import Transaction, TaxDeduction # Updated import
 from ..config import settings
 
 def get_user_transactions(db: Session, user_id: int):
-    return db.query(models.Transaction).filter(models.Transaction.user_id == user_id).all()
+    return db.query(Transaction).filter(Transaction.user_id == user_id).all()
 
 def get_user_tax_deductions(db: Session, user_id: int):
-    return db.query(models.TaxDeduction).filter(models.TaxDeduction.user_id == user_id).all()
+    return db.query(TaxDeduction).filter(TaxDeduction.user_id == user_id).all()
 
 def calculate_tax_summary(db: Session, user_id: int) -> schemas.tax.TaxSummaryResponse:
     transactions = get_user_transactions(db, user_id)
@@ -56,7 +57,7 @@ def calculate_tax_summary(db: Session, user_id: int) -> schemas.tax.TaxSummaryRe
     )
 
 def create_tax_deduction(db: Session, deduction: schemas.tax.TaxDeductionCreate, user_id: int):
-    db_deduction = models.TaxDeduction(**deduction.dict(), user_id=user_id)
+    db_deduction = TaxDeduction(**deduction.dict(), user_id=user_id) # Changed from models.TaxDeduction
     db.add(db_deduction)
     db.commit()
     db.refresh(db_deduction)
