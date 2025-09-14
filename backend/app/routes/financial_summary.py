@@ -15,8 +15,8 @@ router = APIRouter()
 def get_summary_financial(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    start_date: Optional[datetime] = Query(None),
-    end_date: Optional[datetime] = Query(None),
+    start_date: datetime = Query(...), # Made mandatory
+    end_date: datetime = Query(...),   # Made mandatory
 ):
     summary = financial_service.get_financial_summary(
         db=db,

@@ -7,13 +7,12 @@ from ..models.models import Transaction, Investment, TaxDeduction
 def get_financial_summary(
     db: Session,
     user_id: int,
-    start_date: datetime = None,
-    end_date: datetime = None
+    start_date: datetime,
+    end_date: datetime
 ):
-    # Default to last 30 days if no date range is provided
-    if not start_date and not end_date:
-        end_date = datetime.utcnow()
-        start_date = end_date - timedelta(days=30)
+    # Ensure date range is provided
+    if not start_date or not end_date:
+        raise ValueError("start_date and end_date must be provided.")
 
     transactions = db.query(Transaction).filter(
         Transaction.user_id == user_id,
@@ -25,12 +24,20 @@ def get_financial_summary(
     total_expenses = sum(t.amount for t in transactions if t.amount < 0)
     net_savings = total_income + total_expenses  # expenses are negative, so add them
 
-    # Investment Value
-    investments = db.query(Investment).filter(Investment.user_id == user_id).all()
+    # Investment Value - now filtered by date
+    investments = db.query(Investment).filter(
+        Investment.user_id == user_id,
+        Investment.created_at >= start_date,
+        Investment.created_at <= end_date
+    ).all()
     investment_value = sum(inv.current_price * inv.units for inv in investments)
 
-    # Tax Liability (simple sum for now)
-    tax_deductions = db.query(TaxDeduction).filter(TaxDeduction.user_id == user_id).all()
+    # Tax Liability - now filtered by date
+    tax_deductions = db.query(TaxDeduction).filter(
+        TaxDeduction.user_id == user_id,
+        TaxDeduction.created_at >= start_date,
+        TaxDeduction.created_at <= end_date
+    ).all()
     tax_liability = sum(td.amount for td in tax_deductions) # This is a placeholder, real tax calc is complex
 
     # Chart Data: Monthly Income vs Expenses
