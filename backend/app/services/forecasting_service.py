@@ -4,7 +4,7 @@ from datetime import date
 from typing import List
 
 from ..models.models import Transaction
-from ...schemas.forecasting import ForecastResponse
+from ..schemas.forecasting import ForecastResponse
 
 
 def get_monthly_transactions(transactions: List[Transaction], is_expense: bool):
