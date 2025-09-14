@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Filter, Plus, Download } from "lucide-react";
+import { Search, Filter, Plus, Download, CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const transactions = [
   {
@@ -71,12 +75,14 @@ const transactions = [
 export default function Transactions() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [dateRange, setDateRange] = useState<Date | undefined>(undefined);
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.notes.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || transaction.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+    const matchesDate = dateRange ? new Date(transaction.date).toDateString() === dateRange.toDateString() : true;
+    return matchesSearch && matchesCategory && matchesDate;
   });
 
   const formatAmount = (amount: number) => {
@@ -92,32 +98,26 @@ export default function Transactions() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6 relative">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Transactions</h1>
           <p className="text-muted-foreground">Track and manage all your financial transactions.</p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export CSV
-          </Button>
-          <Button className="bg-gradient-primary hover:opacity-90">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Transaction
-          </Button>
-        </div>
+        <Button variant="outline" className="rounded-full">
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
       {/* Filters */}
-      <Card className="shadow-card">
+      <Card className="shadow-md rounded-2xl">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Filters & Search</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -125,15 +125,37 @@ export default function Transactions() {
                   placeholder="Search by merchant or notes..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 rounded-full"
                 />
               </div>
             </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full md:w-[200px] justify-start text-left font-normal rounded-full",
+                    !dateRange && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange ? format(dateRange, "PPP") : <span className="rounded-full">Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 rounded-xl" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger className="w-full md:w-48 rounded-full">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="Food & Dining">Food & Dining</SelectItem>
                 <SelectItem value="Transportation">Transportation</SelectItem>
@@ -143,7 +165,7 @@ export default function Transactions() {
                 <SelectItem value="Shopping">Shopping</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline">
+            <Button variant="outline" className="rounded-full">
               <Filter className="mr-2 h-4 w-4" />
               More Filters
             </Button>
@@ -152,14 +174,14 @@ export default function Transactions() {
       </Card>
 
       {/* Transactions Table */}
-      <Card className="shadow-card">
+      <Card className="shadow-md rounded-2xl">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
             Transaction History ({filteredTransactions.length} transactions)
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          <Table className="striped-rows">
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
@@ -200,6 +222,14 @@ export default function Transactions() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Floating Add Transaction Button */}
+      <Button
+        className="fixed bottom-6 right-6 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-14 w-14 shadow-lg"
+        size="icon"
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
     </div>
   );
 }
