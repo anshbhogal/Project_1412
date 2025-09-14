@@ -9,77 +9,77 @@
 @layer base {
   :root {
     /* Core Background Colors */
-    --background: 250 250 255;
-    --foreground: 215 25% 15%;
+    --background: 210 17% 98%; /* Gray-50 */
+    --foreground: 210 20% 17%; /* Gray-900 */
     
-    /* Financial App Primary - Deep Professional Blue */
-    --primary: 213 94% 68%;
+    /* Primary - Blue-600 */
+    --primary: 213 94% 53%;
     --primary-foreground: 0 0% 100%;
     --primary-light: 213 84% 85%;
     --primary-dark: 213 94% 45%;
     
-    /* Success/Profit Green */
-    --success: 142 76% 36%;
+    /* Success Green-500 */
+    --success: 144 65% 45%;
     --success-foreground: 0 0% 100%;
-    --success-light: 142 76% 85%;
+    --success-light: 144 65% 85%;
     
-    /* Danger/Loss Red */
+    /* Error Red-500 */
     --danger: 0 84% 60%;
     --danger-foreground: 0 0% 100%;
     --danger-light: 0 84% 95%;
     
-    /* Warning/Attention Orange */
-    --warning: 38 92% 50%;
+    /* Warning Amber-500 */
+    --warning: 39 92% 49%;
     --warning-foreground: 0 0% 100%;
-    --warning-light: 38 92% 95%;
+    --warning-light: 39 92% 95%;
     
-    /* Financial Accent - Mint Green */
-    --accent: 160 84% 39%;
+    /* Secondary/Accent Cyan-500 */
+    --accent: 186 91% 43%;
     --accent-foreground: 0 0% 100%;
-    --accent-light: 160 84% 95%;
+    --accent-light: 186 91% 90%;
     
-    /* Neutral Grays */
-    --muted: 220 13% 96%;
-    --muted-foreground: 220 9% 46%;
-    --muted-dark: 220 13% 91%;
+    /* Text Secondary Gray-500 */
+    --muted: 210 17% 98%; /* Gray-50 */
+    --muted-foreground: 215 9% 48%; /* Gray-500 */
+    --muted-dark: 210 17% 91%;
     
-    /* Card & Surface Colors */
+    /* Card & Surface Colors - White */
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
-    --card-border: 220 13% 91%;
+    --card-foreground: 210 20% 17%; /* Gray-900 */
+    --card-border: 210 17% 91%;
     
     /* Interactive Elements */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 213 94% 68%;
-    --hover: 220 13% 96%;
+    --border: 210 17% 91%;
+    --input: 210 17% 91%;
+    --ring: 213 94% 53%;
+    --hover: 210 17% 96%;
     
     /* Sidebar Specific */
-    --sidebar-background: 220 13% 98%;
-    --sidebar-foreground: 215 25% 15%;
-    --sidebar-primary: 213 94% 68%;
+    --sidebar-background: 0 0% 100%; /* White */
+    --sidebar-foreground: 210 20% 17%; /* Gray-900 */
+    --sidebar-primary: 213 94% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 13% 96%;
-    --sidebar-accent-foreground: 215 25% 15%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 213 94% 68%;
+    --sidebar-accent: 210 17% 96%;
+    --sidebar-accent-foreground: 210 20% 17%;
+    --sidebar-border: 210 17% 91%;
+    --sidebar-ring: 213 94% 53%;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(213 94% 68%), hsl(160 84% 39%));
-    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 55%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(220 13% 98%));
-    --gradient-chart: linear-gradient(180deg, hsl(213 94% 68% / 0.1), hsl(213 94% 68% / 0.05));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-light)));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 17% 98%));
+    --gradient-chart: linear-gradient(180deg, hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.05));
     
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(220 13% 91% / 0.5);
-    --shadow-md: 0 4px 6px -1px hsl(220 13% 91% / 0.7);
-    --shadow-lg: 0 10px 15px -3px hsl(220 13% 91% / 0.8);
-    --shadow-card: 0 2px 8px hsl(220 13% 91% / 0.6);
+    --shadow-sm: 0 1px 2px 0 hsl(210 17% 91% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(210 17% 91% / 0.1), 0 2px 4px -2px hsl(210 17% 91% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(210 17% 91% / 0.1), 0 4px 6px -4px hsl(210 17% 91% / 0.05);
+    --shadow-card: 0 2px 8px hsl(210 17% 91% / 0.1);
     
     /* Border Radius */
-    --radius: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 20px;
+    --radius: 0.75rem; /* rounded-lg (12px) for general elements */
+    --radius-lg: 1rem;  /* rounded-xl (16px) for larger elements */
+    --radius-xl: 1.5rem; /* rounded-2xl (24px) for cards/sections */
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -87,61 +87,61 @@
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: 213 30% 18%; /* Dark mode background #1E293B */
+    --foreground: 210 20% 90%; /* Dark mode text #E2E8F0 */
     
-    --primary: 213 94% 68%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 213 94% 53%;
+    --primary-foreground: 0 0% 100%;
     --primary-light: 213 84% 25%;
     --primary-dark: 213 94% 85%;
     
-    --success: 142 76% 50%;
-    --success-foreground: 222 47% 11%;
-    --success-light: 142 76% 15%;
+    --success: 144 65% 45%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 144 65% 15%;
     
-    --danger: 0 84% 65%;
-    --danger-foreground: 222 47% 11%;
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
     --danger-light: 0 84% 15%;
     
-    --warning: 38 92% 60%;
-    --warning-foreground: 222 47% 11%;
-    --warning-light: 38 92% 15%;
+    --warning: 39 92% 49%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 39 92% 15%;
     
-    --accent: 160 84% 50%;
-    --accent-foreground: 222 47% 11%;
-    --accent-light: 160 84% 15%;
+    --accent: 186 91% 43%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 186 91% 15%;
     
-    --muted: 222 47% 16%;
-    --muted-foreground: 215 20% 65%;
-    --muted-dark: 222 47% 12%;
+    --muted: 213 30% 18%;
+    --muted-foreground: 215 9% 65%;
+    --muted-dark: 213 30% 12%;
     
-    --card: 222 47% 13%;
-    --card-foreground: 210 40% 98%;
-    --card-border: 222 47% 20%;
+    --card: 215 29% 26%; /* Dark mode cards #334155 */
+    --card-foreground: 210 20% 90%; /* Dark mode text #E2E8F0 */
+    --card-border: 215 29% 35%;
     
-    --border: 222 47% 20%;
-    --input: 222 47% 20%;
-    --ring: 213 94% 68%;
-    --hover: 222 47% 16%;
+    --border: 215 29% 35%;
+    --input: 215 29% 35%;
+    --ring: 213 94% 53%;
+    --hover: 215 29% 30%;
     
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 213 94% 68%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 47% 16%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 47% 20%;
-    --sidebar-ring: 213 94% 68%;
+    --sidebar-background: 213 30% 18%; /* Dark mode background #1E293B */
+    --sidebar-foreground: 210 20% 90%; /* Dark mode text #E2E8F0 */
+    --sidebar-primary: 213 94% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 29% 30%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 215 29% 35%;
+    --sidebar-ring: 213 94% 53%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(213 94% 68%), hsl(160 84% 50%));
-    --gradient-success: linear-gradient(135deg, hsl(142 76% 50%), hsl(142 76% 65%));
-    --gradient-card: linear-gradient(145deg, hsl(222 47% 13%), hsl(222 47% 16%));
-    --gradient-chart: linear-gradient(180deg, hsl(213 94% 68% / 0.2), hsl(213 94% 68% / 0.05));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-light)));
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(215 29% 30%));
+    --gradient-chart: linear-gradient(180deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.05));
     
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 5% / 0.3);
-    --shadow-md: 0 4px 6px -1px hsl(222 47% 5% / 0.4);
-    --shadow-lg: 0 10px 15px -3px hsl(222 47% 5% / 0.5);
-    --shadow-card: 0 2px 8px hsl(222 47% 5% / 0.4);
+    --shadow-sm: 0 1px 2px 0 hsl(213 30% 5% / 0.3);
+    --shadow-md: 0 4px 6px -1px hsl(213 30% 5% / 0.4), 0 2px 4px -2px hsl(213 30% 5% / 0.2);
+    --shadow-lg: 0 10px 15px -3px hsl(213 30% 5% / 0.5), 0 4px 6px -4px hsl(213 30% 5% / 0.2);
+    --shadow-card: 0 2px 8px hsl(213 30% 5% / 0.4);
   }
 }
 
