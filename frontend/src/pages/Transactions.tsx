@@ -100,11 +100,14 @@ export default function Transactions() {
   });
 
   const formatAmount = (amount: number) => {
-    const formatted = Math.abs(amount).toLocaleString('en-US', {
+    const formatter = new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
-    return amount < 0 ? `-${formatted}` : `+${formatted}`;
+    const formatted = formatter.format(Math.abs(amount));
+    return amount < 0 ? `-${formatted}` : formatted;
   };
 
   const getAmountColor = (amount: number) => {
@@ -223,8 +226,7 @@ export default function Transactions() {
                 <TableHead>Date</TableHead>
                 <TableHead>Merchant</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Description</TableHead> {/* Changed from Notes to Description */}
-                <TableHead>Status</TableHead> {/* Status is not in schema, will be removed or added */}
+                <TableHead>Description</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
@@ -242,14 +244,6 @@ export default function Transactions() {
                     <TableCell className="text-muted-foreground">
                       {transaction.description}
                     </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={transaction.status === "completed" ? "default" : "secondary"} // Status is not in schema
-                        className={transaction.status === "completed" ? "bg-success text-success-foreground" : ""} // Status is not in schema
-                      >
-                        {transaction.status} {/* Status is not in schema */}
-                      </Badge>
-                    </TableCell>
                     <TableCell className={`text-right font-semibold ${getAmountColor(transaction.amount)}`}>
                       {formatAmount(transaction.amount)}
                     </TableCell>
@@ -257,7 +251,7 @@ export default function Transactions() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground">
                     No transactions found for the selected filters.
                   </TableCell>
                 </TableRow>
