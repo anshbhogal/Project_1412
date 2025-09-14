@@ -9,7 +9,7 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    DB_URL: str = os.getenv("DB_URL", "postgresql+psycopg2://user:password@localhost:5432/finance_app")
+    DB_URL: str = os.getenv("DB_URL", "mysql+pymysql://root:root@localhost:3306/finance_db")
 
     # Tax Configuration
     TAX_BASIC_EXEMPTION_LIMIT: float = 250000.0
