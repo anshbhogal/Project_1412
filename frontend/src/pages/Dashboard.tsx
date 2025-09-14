@@ -9,10 +9,20 @@ import { healthCheck } from "../api/healthService";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { motion } from "framer-motion";
 import { getTransactions } from "../api/transactions";
+import { getFinancialSummary } from "../api/financial"; // New import
 
 export default function Dashboard() {
   const [backendStatus, setBackendStatus] = useState("pending...");
   const [recentTransactions, setRecentTransactions] = useState([]);
+  const [financialSummary, setFinancialSummary] = useState({
+    total_income: 0,
+    total_expenses: 0,
+    net_savings: 0,
+    investment_value: 0,
+    tax_liability: 0,
+    income_vs_expenses_chart_data: [],
+    expense_breakdown_chart_data: [],
+  });
 
   useEffect(() => {
     healthCheck()
@@ -22,6 +32,10 @@ export default function Dashboard() {
     getTransactions()
       .then((data) => setRecentTransactions(data.slice(0, 5))) // Get latest 5 transactions
       .catch((error) => console.error("Error fetching recent transactions:", error));
+
+    getFinancialSummary()
+      .then((data) => setFinancialSummary(data))
+      .catch((error) => console.error("Error fetching financial summary:", error));
   }, []);
 
   const cardVariants = {
@@ -69,9 +83,9 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Total Income"
-            value={<AnimatedNumber value={6200} prefix="$" />}
-            change="+8.2% from last month"
-            changeType="positive"
+            value={<AnimatedNumber value={financialSummary.total_income} prefix="$" />}
+            change="+8.2% from last month" // Placeholder for now, can be calculated later
+            changeType={financialSummary.total_income > 0 ? "positive" : "neutral"}
             icon={<TrendingUp className="h-5 w-5" />}
           />
         </motion.div>
@@ -83,9 +97,9 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Total Expenses"
-            value={<AnimatedNumber value={4300} prefix="$" />}
-            change="-3.1% from last month"
-            changeType="negative"
+            value={<AnimatedNumber value={financialSummary.total_expenses} prefix="$" />}
+            change="-3.1% from last month" // Placeholder
+            changeType={financialSummary.total_expenses > 0 ? "negative" : "neutral"}
             icon={<TrendingDown className="h-5 w-5" />}
           />
         </motion.div>
@@ -97,9 +111,9 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Net Savings"
-            value={<AnimatedNumber value={1900} prefix="$" />}
-            change="+$240 from last month"
-            changeType="positive"
+            value={<AnimatedNumber value={financialSummary.net_savings} prefix="$" />}
+            change="+$240 from last month" // Placeholder
+            changeType={financialSummary.net_savings > 0 ? "positive" : financialSummary.net_savings < 0 ? "negative" : "neutral"}
             icon={<PiggyBank className="h-5 w-5" />}
           />
         </motion.div>
@@ -111,9 +125,9 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Investment Value"
-            value={<AnimatedNumber value={24500} prefix="$" />}
-            change="+5.4% this month"
-            changeType="positive"
+            value={<AnimatedNumber value={financialSummary.investment_value} prefix="$" />}
+            change="+5.4% this month" // Placeholder
+            changeType={financialSummary.investment_value > 0 ? "positive" : "neutral"}
             icon={<TrendingUp className="h-5 w-5" />}
           />
         </motion.div>
@@ -125,8 +139,8 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Tax Liability"
-            value={<AnimatedNumber value={2100} prefix="$" />}
-            change="Due in 45 days"
+            value={<AnimatedNumber value={financialSummary.tax_liability} prefix="$" />}
+            change="Due in 45 days" // Placeholder
             changeType="neutral"
             icon={<DollarSign className="h-5 w-5" />}
           />
@@ -146,7 +160,7 @@ export default function Dashboard() {
               <CardTitle>Monthly Expense Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
-              <ExpenseChart />
+              <ExpenseChart data={financialSummary.expense_breakdown_chart_data} />
             </CardContent>
           </Card>
         </motion.div>
@@ -161,7 +175,7 @@ export default function Dashboard() {
               <CardTitle>Income vs Expenses Trend</CardTitle>
             </CardHeader>
             <CardContent>
-              <IncomeExpenseChart />
+              <IncomeExpenseChart data={financialSummary.income_vs_expenses_chart_data} />
             </CardContent>
           </Card>
         </motion.div>
