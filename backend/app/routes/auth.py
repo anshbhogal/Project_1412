@@ -4,15 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from ..schemas import schemas
+from ..schemas.user import UserCreate, UserResponse
 from ..models.models import User
 from ..dependencies import get_db, get_current_user
 from ..utils import auth as auth_utils
 
 router = APIRouter()
 
-@router.post("/signup", response_model=schemas.UserResponse)
-def signup_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+@router.post("/signup", response_model=UserResponse)
+def signup_user(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
@@ -39,6 +39,6 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/me", response_model=schemas.UserResponse)
-def read_users_me(current_user: schemas.UserResponse = Depends(get_current_user)):
+@router.get("/me", response_model=UserResponse)
+def read_users_me(current_user: UserResponse = Depends(get_current_user)):
     return current_user
