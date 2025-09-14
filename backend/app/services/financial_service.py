@@ -10,6 +10,7 @@ def get_financial_summary(
     start_date: datetime,
     end_date: datetime
 ):
+    print(f"Fetching financial summary for user_id: {user_id}, from {start_date} to {end_date}") # Debug print
     # Ensure date range is provided
     if not start_date or not end_date:
         raise ValueError("start_date and end_date must be provided.")
@@ -19,6 +20,7 @@ def get_financial_summary(
         Transaction.date >= start_date,
         Transaction.date <= end_date
     ).all()
+    print(f"Fetched {len(transactions)} transactions.") # Debug print
 
     total_income = sum(t.amount for t in transactions if t.amount > 0)
     total_expenses = sum(t.amount for t in transactions if t.amount < 0)
@@ -30,6 +32,7 @@ def get_financial_summary(
         Investment.created_at >= start_date,
         Investment.created_at <= end_date
     ).all()
+    print(f"Fetched {len(investments)} investments.") # Debug print
     investment_value = sum(inv.current_price * inv.units for inv in investments)
 
     # Tax Liability - now filtered by date
@@ -38,7 +41,10 @@ def get_financial_summary(
         TaxDeduction.created_at >= start_date,
         TaxDeduction.created_at <= end_date
     ).all()
+    print(f"Fetched {len(tax_deductions)} tax deductions.") # Debug print
     tax_liability = sum(td.amount for td in tax_deductions) # This is a placeholder, real tax calc is complex
+
+    print(f"Calculated: Income={total_income}, Expenses={total_expenses}, Savings={net_savings}, Investments={investment_value}, Tax={tax_liability}") # Debug print
 
     # Chart Data: Monthly Income vs Expenses
     monthly_data = defaultdict(lambda: {"income": 0.0, "expenses": 0.0})

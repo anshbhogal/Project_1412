@@ -11,7 +11,7 @@ from ..services import financial_service
 
 router = APIRouter()
 
-@router.get("/summary/financial", response_model=FinancialSummary)
+@router.get("/financial", response_model=FinancialSummary)
 def get_summary_financial(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
