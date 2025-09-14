@@ -1,6 +1,7 @@
 import { Lightbulb, TrendingUp, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 interface RecommendationCardProps {
   icon: React.ReactNode;
@@ -11,20 +12,26 @@ interface RecommendationCardProps {
 
 function RecommendationCard({ icon, title, description, link }: RecommendationCardProps) {
   return (
-    <Card className="shadow-md rounded-2xl cursor-pointer hover:shadow-lg transition-all duration-200">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        {icon}
-        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground text-sm">{description}</p>
-        {link && (
-          <Button variant="link" className="p-0 h-auto mt-3">
-            Learn More
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+    <motion.div
+      whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
+      whileTap={{ scale: 0.98, transition: { duration: 0.2 } }}
+      className="h-full"
+    >
+      <Card className="shadow-md rounded-2xl cursor-pointer hover:shadow-lg transition-all duration-200 h-full flex flex-col">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          {icon}
+          <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col justify-between">
+          <p className="text-muted-foreground text-sm">{description}</p>
+          {link && (
+            <Button variant="link" className="p-0 h-auto mt-3">
+              Learn More
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -68,6 +75,11 @@ export default function Recommendations() {
     },
   ];
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -79,13 +91,20 @@ export default function Recommendations() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {recommendationsData.map((recommendation, index) => (
-          <RecommendationCard
+          <motion.div
             key={index}
-            icon={recommendation.icon}
-            title={recommendation.title}
-            description={recommendation.description}
-            link={recommendation.link}
-          />
+            initial="hidden"
+            animate="visible"
+            variants={cardVariants}
+            transition={{ duration: 0.5, delay: index * 0.1 + 0.1 }}
+          >
+            <RecommendationCard
+              icon={recommendation.icon}
+              title={recommendation.title}
+              description={recommendation.description}
+              link={recommendation.link}
+            />
+          </motion.div>
         ))}
       </div>
     </div>
