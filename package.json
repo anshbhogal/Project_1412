@@ -3,6 +3,7 @@
     "vite": "^7.1.5"
   },
   "dependencies": {
-    "@react-spring/web": "^10.0.2"
+    "@react-spring/web": "^10.0.2",
+    "recharts": "^3.2.0"
   }
 }

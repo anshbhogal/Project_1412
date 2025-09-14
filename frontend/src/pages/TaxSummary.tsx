@@ -1,6 +1,7 @@
 import { DollarSign, Calendar } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedNumber } from "@/components/ui/animated-number";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const taxData = [
   { month: "Jan", liability: 500 },
@@ -13,9 +14,33 @@ const taxData = [
 
 function TaxBarChart() {
   return (
-    <div className="flex items-center justify-center h-64 bg-muted rounded-xl">
-      <p className="text-muted-foreground">Bar Chart Placeholder (Recharts)</p>
-    </div>
+    <ResponsiveContainer width="100%" height={250}>
+      <BarChart
+        data={taxData}
+        margin={{
+          top: 5,
+          right: 30,
+          left: 20,
+          bottom: 5,
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+        <XAxis dataKey="month" className="fill-foreground" />
+        <YAxis className="fill-foreground" />
+        <Tooltip 
+          cursor={{ fill: 'hsl(var(--muted))', opacity: '0.2' }} 
+          contentStyle={{ 
+            backgroundColor: 'hsl(var(--card))', 
+            borderColor: 'hsl(var(--border))', 
+            borderRadius: 'var(--radius)' 
+          }}
+          labelStyle={{ color: 'hsl(var(--foreground))' }}
+          itemStyle={{ color: 'hsl(var(--foreground))' }}
+        />
+        <Legend />
+        <Bar dataKey="liability" fill="hsl(var(--primary))" name="Tax Liability" radius={[4, 4, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
 
