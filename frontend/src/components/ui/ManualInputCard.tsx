@@ -11,32 +11,79 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format, getYear } from 'date-fns';
+import { format, getYear, parseISO } from 'date-fns'; // Added parseISO
+import { createTransaction } from "../../api/transactions"; // New import
+import { useQueryClient } from '@tanstack/react-query'; // New import for cache invalidation
 
 export function ManualInputCard() {
   const [salary, setSalary] = useState<string>('');
   const [expenses, setExpenses] = useState<string>('');
   const [investment, setInvestment] = useState<string>('');
-  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'MM')); // Default to current month
-  const [selectedYear, setSelectedYear] = useState<string>(String(getYear(new Date()))); // Default to current year
+  const [selectedMonth, setSelectedMonth] = useState<string>(format(new Date(), 'MM'));
+  const [selectedYear, setSelectedYear] = useState<string>(String(getYear(new Date())));
+  const queryClient = useQueryClient(); // Initialize query client
 
-  const handleSave = () => {
-    // For now, just log the data to the console
-    console.log({
-      month: selectedMonth,
-      year: selectedYear,
-      salary: parseFloat(salary),
-      expenses: parseFloat(expenses),
-      investment: parseFloat(investment),
-    });
-    toast({
-      title: "Data Saved",
-      description: `Your manual input for ${format(new Date(Number(selectedYear), Number(selectedMonth) - 1, 1), 'MMMM yyyy')} has been saved (console logged for now).`,
-    });
-    // Clear inputs after saving
-    setSalary('');
-    setExpenses('');
-    setInvestment('');
+  const handleSave = async () => {
+    const transactionDate = format(new Date(Number(selectedYear), Number(selectedMonth) - 1, 1), 'yyyy-MM-dd');
+    const transactionsToCreate = [];
+
+    if (parseFloat(salary) > 0) {
+      transactionsToCreate.push({
+        date: transactionDate,
+        merchant: "Monthly Salary",
+        description: `Manual salary input for ${format(parseISO(transactionDate), 'MMMM yyyy')}`,
+        amount: parseFloat(salary),
+        category: "Income",
+        source: "Manual Input",
+      });
+    }
+
+    if (parseFloat(expenses) > 0) {
+      transactionsToCreate.push({
+        date: transactionDate,
+        merchant: "Monthly Expenses",
+        description: `Manual expenses input for ${format(parseISO(transactionDate), 'MMMM yyyy')}`,
+        amount: -parseFloat(expenses),
+        category: "Expenses",
+        source: "Manual Input",
+      });
+    }
+
+    if (parseFloat(investment) > 0) {
+      transactionsToCreate.push({
+        date: transactionDate,
+        merchant: "Monthly Investment",
+        description: `Manual investment input for ${format(parseISO(transactionDate), 'MMMM yyyy')}`,
+        amount: -parseFloat(investment),
+        category: "Investment",
+        source: "Manual Input",
+      });
+    }
+
+    try {
+      for (const transactionData of transactionsToCreate) {
+        await createTransaction(transactionData);
+      }
+
+      toast({
+        title: "Data Saved",
+        description: `Your manual input for ${format(new Date(Number(selectedYear), Number(selectedMonth) - 1, 1), 'MMMM yyyy')} has been saved.`,
+      });
+      // Invalidate queries to refetch dashboard data
+      queryClient.invalidateQueries({ queryKey: ['financialSummary'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
+      setSalary('');
+      setExpenses('');
+      setInvestment('');
+    } catch (error: any) {
+      toast({
+        title: "Error Saving Data",
+        description: error.response?.data?.detail || "An error occurred while saving manual data.",
+        variant: "destructive",
+      });
+      console.error("Error saving manual input:", error);
+    }
   };
 
   const months = Array.from({ length: 12 }, (_, i) => ({
@@ -44,7 +91,7 @@ export function ManualInputCard() {
     label: format(new Date(0, i), 'MMMM'),
   }));
 
-  const years = Array.from({ length: 5 }, (_, i) => String(getYear(new Date()) - 2 + i)); // Current year +/- 2
+  const years = Array.from({ length: 5 }, (_, i) => String(getYear(new Date()) - 2 + i));
 
   return (
     <Card className="shadow-md rounded-2xl">
