@@ -89,7 +89,7 @@ export default function Forecasts() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            At your current spending rate, you are projected to save <span className="font-semibold text-primary">${sixMonthSavings.toFixed(2)}</span> in the next 6 months and <span className="font-semibold text-primary">${twelveMonthSavings.toFixed(2)}</span> in the next 12 months. Consider increasing your contributions by Z% to reach your goals faster.
+            At your current spending rate, you are projected to save <span className="font-semibold text-primary">₹{sixMonthSavings.toFixed(2)}</span> in the next 6 months and <span className="font-semibold text-primary">₹{twelveMonthSavings.toFixed(2)}</span> in the next 12 months. Consider increasing your contributions by Z% to reach your goals faster.
           </p>
         </CardContent>
       </Card>

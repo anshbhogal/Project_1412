@@ -13,7 +13,7 @@ export function IncomeExpenseChart({ data }: IncomeExpenseChartProps) {
           <p className="font-medium text-card-foreground mb-2">{label}</p>
           {payload.map((item: any, index: number) => (
             <p key={index} className="text-sm" style={{ color: item.color }}>
-              {item.name}: ${item.value.toLocaleString()}
+              {item.name}: ₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </p>
           ))}
         </div>
@@ -47,7 +47,7 @@ export function IncomeExpenseChart({ data }: IncomeExpenseChartProps) {
             axisLine={false}
             tickLine={false}
             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-            tickFormatter={(value) => `$${value / 1000}k`}
+            tickFormatter={(value) => `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
           />
           <Tooltip content={<CustomTooltip />} />
           <Area

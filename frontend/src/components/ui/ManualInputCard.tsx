@@ -132,7 +132,7 @@ export function ManualInputCard() {
           </div>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="salary">Monthly Salary ($)</Label>
+          <Label htmlFor="salary">Monthly Salary (₹)</Label>
           <Input
             id="salary"
             type="number"
@@ -143,7 +143,7 @@ export function ManualInputCard() {
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="expenses">Monthly Expenses ($)</Label>
+          <Label htmlFor="expenses">Monthly Expenses (₹)</Label>
           <Input
             id="expenses"
             type="number"
@@ -154,7 +154,7 @@ export function ManualInputCard() {
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="investment">Monthly Investment ($)</Label>
+          <Label htmlFor="investment">Monthly Investment (₹)</Label>
           <Input
             id="investment"
             type="number"
