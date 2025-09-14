@@ -23,24 +23,67 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { getTransactions } from "../api/transactions";
+import { getTransactions, uploadTransactions } from "../api/transactions"; // Added uploadTransactions
+import { useToast } from "@/components/ui/use-toast"; // For user feedback
 
 export default function Transactions() {
   const [transactions, setTransactions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [dateRange, setDateRange] = useState<Date | undefined>(undefined);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // New state for file
+  const { toast } = useToast();
 
-  useEffect(() => {
+  const fetchTransactions = () => {
     getTransactions()
       .then((data) => setTransactions(data))
       .catch((error) => console.error("Error fetching transactions:", error));
+  };
+
+  useEffect(() => {
+    fetchTransactions();
   }, []);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleUploadClick = async () => {
+    if (!selectedFile) {
+      toast({
+        title: "No file selected",
+        description: "Please select a CSV or Excel file to upload.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      await uploadTransactions(formData);
+      toast({
+        title: "Upload Successful",
+        description: "Transactions have been successfully uploaded.",
+      });
+      setSelectedFile(null); // Clear selected file
+      fetchTransactions(); // Refresh transactions list
+    } catch (error: any) {
+      toast({
+        title: "Upload Failed",
+        description: error.response?.data?.detail || "An error occurred during upload.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = (
       transaction.merchant.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (transaction.notes && transaction.notes.toLowerCase().includes(searchTerm.toLowerCase()))
+      (transaction.description && transaction.description.toLowerCase().includes(searchTerm.toLowerCase())) // Changed from notes to description
     );
     const matchesCategory = categoryFilter === "all" || transaction.category === categoryFilter;
     const matchesDate = dateRange ? new Date(transaction.date).toDateString() === dateRange.toDateString() : true;
@@ -67,10 +110,32 @@ export default function Transactions() {
           <h1 className="text-3xl font-bold text-foreground">Transactions</h1>
           <p className="text-muted-foreground">Track and manage all your financial transactions.</p>
         </div>
-        <Button variant="outline" className="rounded-full">
-          <Download className="mr-2 h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex gap-2 items-center">
+          <Input 
+            type="file" 
+            accept=".csv, .xlsx" 
+            onChange={handleFileChange} 
+            className="hidden" 
+            id="transaction-upload"
+          />
+          <label htmlFor="transaction-upload">
+            <Button variant="outline" className="rounded-full" asChild>
+              <span>
+                <Plus className="mr-2 h-4 w-4" />
+                {selectedFile ? selectedFile.name : "Upload File"}
+              </span>
+            </Button>
+          </label>
+          {selectedFile && (
+            <Button onClick={handleUploadClick} className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
+              Upload
+            </Button>
+          )}
+          <Button variant="outline" className="rounded-full">
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -84,7 +149,7 @@ export default function Transactions() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by merchant or notes..."
+                  placeholder="Search by merchant or description..." // Changed from notes to description
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9 rounded-full"
@@ -149,8 +214,8 @@ export default function Transactions() {
                 <TableHead>Date</TableHead>
                 <TableHead>Merchant</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Description</TableHead> {/* Changed from Notes to Description */}
+                <TableHead>Status</TableHead> {/* Status is not in schema, will be removed or added */}
                 <TableHead className="text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
@@ -166,14 +231,14 @@ export default function Transactions() {
                       <Badge variant="secondary">{transaction.category}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {transaction.notes}
+                      {transaction.description}
                     </TableCell>
                     <TableCell>
                       <Badge 
-                        variant={transaction.status === "completed" ? "default" : "secondary"}
-                        className={transaction.status === "completed" ? "bg-success text-success-foreground" : ""}
+                        variant={transaction.status === "completed" ? "default" : "secondary"} // Status is not in schema
+                        className={transaction.status === "completed" ? "bg-success text-success-foreground" : ""} // Status is not in schema
                       >
-                        {transaction.status}
+                        {transaction.status} {/* Status is not in schema */}
                       </Badge>
                     </TableCell>
                     <TableCell className={`text-right font-semibold ${getAmountColor(transaction.amount)}`}>
