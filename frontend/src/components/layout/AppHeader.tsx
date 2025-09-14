@@ -1,4 +1,5 @@
 import { Search, Bell, User, Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,8 +13,20 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useUser } from "@/hooks/use-user"; // Import the new hook
 
 export function AppHeader() {
+  const navigate = useNavigate();
+  const { user, isLoading } = useUser(); // Use the custom hook
+
+  const handleLogout = () => {
+    localStorage.removeItem("jwt_token");
+    navigate("/login");
+  };
+
+  const userEmail = user?.email || "";
+  const avatarFallback = userEmail.charAt(0).toUpperCase();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-card-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-md rounded-2xl">
       <div className="flex h-16 items-center justify-between px-4 lg:px-6">
@@ -50,7 +63,7 @@ export function AppHeader() {
                 <Avatar className="h-10 w-10">
                   <AvatarImage src="/avatars/user.jpg" alt="User" />
                   <AvatarFallback className="bg-gradient-primary text-white">
-                    JD
+                    {isLoading ? "..." : avatarFallback || "UN"}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -58,9 +71,11 @@ export function AppHeader() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">John Doe</p>
+                  <p className="text-sm font-medium leading-none">
+                    {isLoading ? "Loading..." : userEmail.split('@')[0] || "User"}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    john.doe@example.com
+                    {isLoading ? "" : userEmail}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -74,7 +89,7 @@ export function AppHeader() {
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-danger">
+              <DropdownMenuItem onClick={handleLogout} className="text-danger">
                 <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
