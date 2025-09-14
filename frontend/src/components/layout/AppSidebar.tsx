@@ -53,11 +53,11 @@ export function AppSidebar() {
   const isActive = (path: string) => currentPath === path;
   const getNavClassName = ({ isActive }: { isActive: boolean }) =>
     isActive
-      ? "bg-sidebar-accent text-sidebar-primary font-medium border-r-2 border-sidebar-primary"
-      : "hover:bg-sidebar-accent/50 text-sidebar-foreground";
+      ? "bg-transparent text-primary font-medium sidebar-active-link"
+      : "hover:bg-accent/50 text-sidebar-foreground";
 
   return (
-    <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
+    <Sidebar className={`shadow-md rounded-2xl ${collapsed ? "w-16" : "w-64"}`} collapsible="icon">
       <SidebarContent className="flex flex-col h-full">
         {/* Logo Section */}
         <div className="p-4 border-b border-sidebar-border">
