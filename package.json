@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "vite": "^7.1.5"
+  },
+  "dependencies": {
+    "@react-spring/web": "^10.0.2"
   }
 }
