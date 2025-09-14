@@ -153,4 +153,20 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .sidebar-active-link {
+    position: relative;
+  }
+
+  .sidebar-active-link::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 80%; /* Adjust as needed */
+    width: 4px; /* Width of the bar */
+    background-color: hsl(var(--primary));
+    border-radius: 0 4px 4px 0; /* Rounded right corners */
+  }
 }
