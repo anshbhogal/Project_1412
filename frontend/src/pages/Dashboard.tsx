@@ -180,7 +180,7 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Total Income"
-            value={<AnimatedNumber value={currentMonthSummary.total_income} prefix="$" />}
+            value={<AnimatedNumber value={currentMonthSummary.total_income} prefix="₹" />}
             change={incomeChange.value}
             changeType={incomeChange.type}
             icon={<TrendingUp className="h-5 w-5" />}
@@ -194,7 +194,7 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Total Expenses"
-            value={<AnimatedNumber value={currentMonthSummary.total_expenses} prefix="$" />}
+            value={<AnimatedNumber value={currentMonthSummary.total_expenses} prefix="₹" />}
             change={expenseChange.value}
             changeType={expenseChange.type}
             icon={<TrendingDown className="h-5 w-5" />}
@@ -208,7 +208,7 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Net Savings"
-            value={<AnimatedNumber value={currentMonthSummary.net_savings} prefix="$" />}
+            value={<AnimatedNumber value={currentMonthSummary.net_savings} prefix="₹" />}
             change={netSavingsChange.value}
             changeType={netSavingsChange.type}
             icon={<PiggyBank className="h-5 w-5" />}
@@ -222,7 +222,7 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Investment Value"
-            value={<AnimatedNumber value={currentMonthSummary.investment_value} prefix="$" />}
+            value={<AnimatedNumber value={currentMonthSummary.investment_value} prefix="₹" />}
             change={investmentValueChange.value}
             changeType={investmentValueChange.type}
             icon={<TrendingUp className="h-5 w-5" />}
@@ -236,7 +236,7 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Tax Liability"
-            value={<AnimatedNumber value={currentMonthSummary.tax_liability} prefix="$" />}
+            value={<AnimatedNumber value={currentMonthSummary.tax_liability} prefix="₹" />}
             change="Due in 45 days" // Keep placeholder for now, as backend doesn't provide this
             changeType="neutral"
             icon={<DollarSign className="h-5 w-5" />}
