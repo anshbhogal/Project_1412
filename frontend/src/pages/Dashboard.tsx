@@ -9,12 +9,32 @@ import { healthCheck } from "../api/healthService";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { motion } from "framer-motion";
 import { getTransactions } from "../api/transactions";
-import { getFinancialSummary } from "../api/financial"; // New import
+import { getFinancialSummary } from "../api/financial";
+import { format, subMonths, startOfMonth, endOfMonth } from "date-fns"; // New import
+
+interface FinancialSummaryData {
+  total_income: number;
+  total_expenses: number;
+  net_savings: number;
+  investment_value: number;
+  tax_liability: number;
+  income_vs_expenses_chart_data: any[];
+  expense_breakdown_chart_data: any[];
+}
 
 export default function Dashboard() {
   const [backendStatus, setBackendStatus] = useState("pending...");
   const [recentTransactions, setRecentTransactions] = useState([]);
-  const [financialSummary, setFinancialSummary] = useState({
+  const [currentMonthSummary, setCurrentMonthSummary] = useState<FinancialSummaryData>({
+    total_income: 0,
+    total_expenses: 0,
+    net_savings: 0,
+    investment_value: 0,
+    tax_liability: 0,
+    income_vs_expenses_chart_data: [],
+    expense_breakdown_chart_data: [],
+  });
+  const [previousMonthSummary, setPreviousMonthSummary] = useState<FinancialSummaryData>({
     total_income: 0,
     total_expenses: 0,
     net_savings: 0,
@@ -33,10 +53,44 @@ export default function Dashboard() {
       .then((data) => setRecentTransactions(data.slice(0, 5))) // Get latest 5 transactions
       .catch((error) => console.error("Error fetching recent transactions:", error));
 
-    getFinancialSummary()
-      .then((data) => setFinancialSummary(data))
-      .catch((error) => console.error("Error fetching financial summary:", error));
+    const fetchFinancialData = async () => {
+      const now = new Date();
+      const currentMonthStart = startOfMonth(now);
+      const currentMonthEnd = endOfMonth(now);
+      const previousMonthStart = startOfMonth(subMonths(now, 1));
+      const previousMonthEnd = endOfMonth(subMonths(now, 1));
+
+      try {
+        const currentSummary = await getFinancialSummary({
+          start_date: format(currentMonthStart, "yyyy-MM-dd"),
+          end_date: format(currentMonthEnd, "yyyy-MM-dd"),
+        });
+        setCurrentMonthSummary(currentSummary);
+
+        const previousSummary = await getFinancialSummary({
+          start_date: format(previousMonthStart, "yyyy-MM-dd"),
+          end_date: format(previousMonthEnd, "yyyy-MM-dd"),
+        });
+        setPreviousMonthSummary(previousSummary);
+      } catch (error) {
+        console.error("Error fetching financial summary:", error);
+      }
+    };
+
+    fetchFinancialData();
   }, []);
+
+  const calculateChange = (current: number, previous: number) => {
+    if (previous === 0) return { value: "N/A", type: "neutral" };
+    const change = ((current - previous) / previous) * 100;
+    const type = change > 0 ? "positive" : change < 0 ? "negative" : "neutral";
+    return { value: `${change.toFixed(1)}% from last month`, type };
+  };
+
+  const incomeChange = calculateChange(currentMonthSummary.total_income, previousMonthSummary.total_income);
+  const expenseChange = calculateChange(currentMonthSummary.total_expenses, previousMonthSummary.total_expenses);
+  const netSavingsChange = calculateChange(currentMonthSummary.net_savings, previousMonthSummary.net_savings);
+  const investmentValueChange = calculateChange(currentMonthSummary.investment_value, previousMonthSummary.investment_value);
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -83,9 +137,9 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Total Income"
-            value={<AnimatedNumber value={financialSummary.total_income} prefix="$" />}
-            change="+8.2% from last month" // Placeholder for now, can be calculated later
-            changeType={financialSummary.total_income > 0 ? "positive" : "neutral"}
+            value={<AnimatedNumber value={currentMonthSummary.total_income} prefix="$" />}
+            change={incomeChange.value}
+            changeType={incomeChange.type}
             icon={<TrendingUp className="h-5 w-5" />}
           />
         </motion.div>
@@ -97,9 +151,9 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Total Expenses"
-            value={<AnimatedNumber value={financialSummary.total_expenses} prefix="$" />}
-            change="-3.1% from last month" // Placeholder
-            changeType={financialSummary.total_expenses > 0 ? "negative" : "neutral"}
+            value={<AnimatedNumber value={currentMonthSummary.total_expenses} prefix="$" />}
+            change={expenseChange.value}
+            changeType={expenseChange.type}
             icon={<TrendingDown className="h-5 w-5" />}
           />
         </motion.div>
@@ -111,9 +165,9 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Net Savings"
-            value={<AnimatedNumber value={financialSummary.net_savings} prefix="$" />}
-            change="+$240 from last month" // Placeholder
-            changeType={financialSummary.net_savings > 0 ? "positive" : financialSummary.net_savings < 0 ? "negative" : "neutral"}
+            value={<AnimatedNumber value={currentMonthSummary.net_savings} prefix="$" />}
+            change={netSavingsChange.value}
+            changeType={netSavingsChange.type}
             icon={<PiggyBank className="h-5 w-5" />}
           />
         </motion.div>
@@ -125,9 +179,9 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Investment Value"
-            value={<AnimatedNumber value={financialSummary.investment_value} prefix="$" />}
-            change="+5.4% this month" // Placeholder
-            changeType={financialSummary.investment_value > 0 ? "positive" : "neutral"}
+            value={<AnimatedNumber value={currentMonthSummary.investment_value} prefix="$" />}
+            change={investmentValueChange.value}
+            changeType={investmentValueChange.type}
             icon={<TrendingUp className="h-5 w-5" />}
           />
         </motion.div>
@@ -139,8 +193,8 @@ export default function Dashboard() {
         >
           <MetricCard
             title="Tax Liability"
-            value={<AnimatedNumber value={financialSummary.tax_liability} prefix="$" />}
-            change="Due in 45 days" // Placeholder
+            value={<AnimatedNumber value={currentMonthSummary.tax_liability} prefix="$" />}
+            change="Due in 45 days" // Keep placeholder for now, as backend doesn't provide this
             changeType="neutral"
             icon={<DollarSign className="h-5 w-5" />}
           />
@@ -160,7 +214,7 @@ export default function Dashboard() {
               <CardTitle>Monthly Expense Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
-              <ExpenseChart data={financialSummary.expense_breakdown_chart_data} />
+              <ExpenseChart data={currentMonthSummary.expense_breakdown_chart_data} />
             </CardContent>
           </Card>
         </motion.div>
@@ -175,7 +229,7 @@ export default function Dashboard() {
               <CardTitle>Income vs Expenses Trend</CardTitle>
             </CardHeader>
             <CardContent>
-              <IncomeExpenseChart data={financialSummary.income_vs_expenses_chart_data} />
+              <IncomeExpenseChart data={currentMonthSummary.income_vs_expenses_chart_data} />
             </CardContent>
           </Card>
         </motion.div>
