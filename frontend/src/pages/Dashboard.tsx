@@ -10,8 +10,15 @@ import { AnimatedNumber } from "@/components/ui/animated-number";
 import { motion } from "framer-motion";
 import { getTransactions } from "../api/transactions";
 import { getFinancialSummary } from "../api/financial";
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns"; // New import
-import { ManualInputCard } from "@/components/ui/ManualInputCard"; // New import
+import { format, subMonths, startOfMonth, endOfMonth, getYear } from "date-fns"; // Added getYear
+import { ManualInputCard } from "@/components/ui/ManualInputCard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // New imports
 
 interface FinancialSummaryData {
   total_income: number;
@@ -26,6 +33,8 @@ interface FinancialSummaryData {
 export default function Dashboard() {
   const [backendStatus, setBackendStatus] = useState("pending...");
   const [recentTransactions, setRecentTransactions] = useState([]);
+  const [selectedDashboardMonth, setSelectedDashboardMonth] = useState<string>(format(new Date(), 'MM')); // New state
+  const [selectedDashboardYear, setSelectedDashboardYear] = useState<string>(String(getYear(new Date()))); // New state
   const [currentMonthSummary, setCurrentMonthSummary] = useState<FinancialSummaryData>({
     total_income: 0,
     total_expenses: 0,
@@ -55,11 +64,11 @@ export default function Dashboard() {
       .catch((error) => console.error("Error fetching recent transactions:", error));
 
     const fetchFinancialData = async () => {
-      const now = new Date();
-      const currentMonthStart = startOfMonth(now);
-      const currentMonthEnd = endOfMonth(now);
-      const previousMonthStart = startOfMonth(subMonths(now, 1));
-      const previousMonthEnd = endOfMonth(subMonths(now, 1));
+      const currentPeriodDate = new Date(Number(selectedDashboardYear), Number(selectedDashboardMonth) - 1, 1); // Use selected month/year
+      const currentMonthStart = startOfMonth(currentPeriodDate);
+      const currentMonthEnd = endOfMonth(currentPeriodDate);
+      const previousMonthStart = startOfMonth(subMonths(currentPeriodDate, 1));
+      const previousMonthEnd = endOfMonth(subMonths(currentPeriodDate, 1));
 
       try {
         const currentSummary = await getFinancialSummary({
@@ -79,7 +88,7 @@ export default function Dashboard() {
     };
 
     fetchFinancialData();
-  }, []);
+  }, [selectedDashboardMonth, selectedDashboardYear]); // Rerun effect when month/year changes
 
   const calculateChange = (current: number, previous: number) => {
     if (previous === 0) return { value: "N/A", type: "neutral" };
@@ -97,6 +106,13 @@ export default function Dashboard() {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
+
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: format(new Date(0, i), 'MM'),
+    label: format(new Date(0, i), 'MMMM'),
+  }));
+
+  const years = Array.from({ length: 5 }, (_, i) => String(getYear(new Date()) - 2 + i));
 
   return (
     <div className="space-y-6 p-6">
@@ -121,10 +137,36 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back! Here's your financial overview.</p>
+        </div>
+        <div className="flex gap-2">
+          <Select value={selectedDashboardMonth} onValueChange={setSelectedDashboardMonth}>
+            <SelectTrigger className="w-[140px] rounded-md">
+              <SelectValue placeholder="Select Month" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedDashboardYear} onValueChange={setSelectedDashboardYear}>
+            <SelectTrigger className="w-[100px] rounded-md">
+              <SelectValue placeholder="Select Year" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              {years.map((year) => (
+                <SelectItem key={year} value={year}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
