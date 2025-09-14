@@ -15,7 +15,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-card-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+    <header className="sticky top-0 z-50 w-full border-b border-card-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 shadow-md rounded-2xl">
       <div className="flex h-16 items-center justify-between px-4 lg:px-6">
         {/* Left section - Sidebar trigger and search */}
         <div className="flex items-center gap-4 flex-1">
@@ -25,7 +25,7 @@ export function AppHeader() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search transactions, investments..."
-              className="pl-9 bg-muted/50 border-muted-dark focus:bg-card"
+              className="pl-9 bg-muted/50 border-muted-dark focus:bg-card rounded-full"
             />
           </div>
         </div>
