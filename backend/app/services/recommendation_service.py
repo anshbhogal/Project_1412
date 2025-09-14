@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 import pandas as pd
 
-from backend.app.models.models import User, Transaction, Investment, TaxDeduction
-from backend.app.services import forecasting_service, investment_service, tax_service
-from backend.app.schemas.recommendations import RecommendationResponse
+from ..models.models import User, Transaction, Investment, TaxDeduction
+from . import forecasting_service, investment_service, tax_service
+from ..schemas.recommendations import RecommendationResponse
 
 
 def get_expense_recommendations(user_id: int, db: Session) -> List[str]:
