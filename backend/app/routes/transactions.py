@@ -30,26 +30,76 @@ def upload_transactions(
         else:
             df = pd.read_excel(io.BytesIO(contents))
 
-        transactions_to_create = []
-        for index, row in df.iterrows():
-            transaction_data = {
-                "date": pd.to_datetime(row["date"]),
-                "merchant": row["merchant"],
-                "description": row.get("description"),
-                "amount": float(row["amount"]),
-                "category": row["category"],
-                "source": row.get("source"),
-            }
-            transaction = TransactionCreate(**transaction_data)
-            db_transaction = ModelTransaction(**transaction.model_dump(), user_id=current_user.id)
-            transactions_to_create.append(db_transaction)
+        required_columns = ["date", "merchant", "amount", "category"]
+        if not all(col in df.columns for col in required_columns):
+            missing_cols = [col for col in required_columns if col not in df.columns]
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Missing required columns: {', '.join(missing_cols)}. Required columns are: {', '.join(required_columns)}"
+            )
 
+        transactions_to_create = []
+        all_errors = []
+
+        for index, row in df.iterrows():
+            row_errors = []
+            
+            # Date validation
+            try:
+                transaction_date = pd.to_datetime(row["date"])
+                if pd.isna(transaction_date):
+                    row_errors.append(f"Row {index + 2}: Invalid date value.")
+            except Exception:
+                row_errors.append(f"Row {index + 2}: Invalid date format.")
+                transaction_date = None # Set to None to prevent further errors
+
+            # Amount validation
+            try:
+                amount = float(row["amount"])
+            except (ValueError, TypeError):
+                row_errors.append(f"Row {index + 2}: Invalid amount value.")
+                amount = None
+
+            # Merchant and Category validation
+            merchant = str(row["merchant"]).strip() if pd.notna(row["merchant"]) else ""
+            category = str(row["category"]).strip() if pd.notna(row["category"]) else ""
+
+            if not merchant:
+                row_errors.append(f"Row {index + 2}: Missing merchant.")
+            if not category:
+                row_errors.append(f"Row {index + 2}: Missing category.")
+            
+            if row_errors:
+                all_errors.extend(row_errors)
+                continue
+
+            transaction_data = {
+                "date": transaction_date,
+                "merchant": merchant,
+                "description": str(row.get("description", "")).strip() if pd.notna(row.get("description")) else "",
+                "amount": amount,
+                "category": category,
+                "source": str(row.get("source", "")).strip() if pd.notna(row.get("source")) else "",
+            }
+            
+            try:
+                transaction_schema = TransactionCreate(**transaction_data)
+                db_transaction = ModelTransaction(**transaction_schema.model_dump(), user_id=current_user.id)
+                transactions_to_create.append(db_transaction)
+            except Exception as e:
+                all_errors.append(f"Row {index + 2}: Schema validation error - {e}")
+
+        if all_errors:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=all_errors)
+            
         db.add_all(transactions_to_create)
         db.commit()
         for transaction in transactions_to_create:
             db.refresh(transaction)
         return transactions_to_create
 
+    except HTTPException as e:
+        raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing file: {e}")
 

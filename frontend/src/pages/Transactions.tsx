@@ -72,9 +72,18 @@ export default function Transactions() {
       setSelectedFile(null); // Clear selected file
       fetchTransactions(); // Refresh transactions list
     } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || "An error occurred during upload.";
+      let displayMessage = "An error occurred during upload.";
+      if (Array.isArray(errorMessage)) {
+        displayMessage = errorMessage.join("\n");
+      } else if (typeof errorMessage === 'string') {
+        displayMessage = errorMessage;
+      } else if (errorMessage.detail && Array.isArray(errorMessage.detail)) {
+        displayMessage = errorMessage.detail.join("\n");
+      }
       toast({
         title: "Upload Failed",
-        description: error.response?.data?.detail || "An error occurred during upload.",
+        description: displayMessage,
         variant: "destructive",
       });
     }
