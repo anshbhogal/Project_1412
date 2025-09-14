@@ -33,7 +33,7 @@ function InvestmentCard({
       </CardHeader>
       <CardContent className="flex-1 flex flex-col justify-between">
         <div className="text-3xl font-bold">
-          <AnimatedNumber value={value} prefix="$" />
+          <AnimatedNumber value={value} prefix="₹" />
         </div>
         <div className={`text-sm font-medium flex items-center ${changeColor} mt-2`}>
           {percentageChange.toFixed(2)}% {arrowIcon}
