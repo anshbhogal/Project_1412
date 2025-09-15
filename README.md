@@ -1,430 +1,133 @@
-### Tax Management Module
+# Financial Management Dashboard
 
-The Tax Management module provides endpoints to calculate tax summaries, manage tax deductions, and receive tax-saving suggestions.
+A comprehensive financial management dashboard designed to help users track income, expenses, investments, and tax liabilities with intuitive visualizations and an easy-to-use interface.
 
-#### Endpoints
+## Features
 
-##### `GET /tax/summary`
+*   **User Authentication**: Secure signup and login system.
+*   **Dashboard Overview**:
+    *   Key Performance Indicators (KPIs) for income, expenses, net savings, investment value, and tax liability.
+    *   Interactive charts for monthly income vs. expenses trend and expense breakdown.
+    *   Backend health check indicator.
+    *   Month and year selection to filter dashboard data.
+*   **Transaction Management**:
+    *   View, add, update, and delete transactions.
+    *   Manual input for salary, expenses, and investments with date selection.
+    *   Upload transactions via CSV/Excel file.
+*   **Tax Summary**: Overview of tax liability and breakdown.
+*   **Investments Tracking**: Monitor investment performance with sparkline charts.
+*   **Financial Forecasts**: Project future savings and cash flow.
+*   **Recommendations**: AI-driven insights for financial optimization.
+*   **Reports**: Generate financial reports.
+*   **Responsive Design**: Optimized for various screen sizes, including mobile.
+*   **Currency**: All financial values displayed in **INR (₹)**.
 
-Calculates the tax summary for the logged-in user based on income and deductions.
+## Technologies Used
 
-**Example Response:**
+### Frontend
+*   **React**: A JavaScript library for building user interfaces.
+*   **TypeScript**: A typed superset of JavaScript that compiles to plain JavaScript.
+*   **Tailwind CSS**: A utility-first CSS framework for rapid UI development.
+*   **Shadcn/ui**: Re-usable components built using Tailwind CSS and Radix UI.
+*   **Framer Motion**: A production-ready motion library for React.
+*   **Recharts**: A composable charting library built on React components.
+*   **date-fns**: A modern JavaScript date utility library.
+*   **React Router Dom**: For declarative routing in React applications.
+*   **Axios**: Promise-based HTTP client for the browser and node.js.
+*   **@tanstack/react-query**: For data fetching, caching, and state management.
 
-```json
-{
-  "gross_income": 650000,
-  "deductions": 200000,
-  "taxable_income": 450000,
-  "tax_liability": 10000
-}
+### Backend
+*   **FastAPI**: A modern, fast (high-performance) web framework for building APIs with Python 3.7+ based on standard Python type hints.
+*   **SQLAlchemy**: The Python SQL toolkit and Object Relational Mapper.
+*   **Pydantic**: Data validation and settings management using Python type hints.
+*   **MySQL**: The relational database used for data storage.
+*   **PyMySQL**: MySQL database connector for Python.
+*   **Passlib**: For password hashing.
+*   **Python-jose**: For JSON Web Tokens (JWT) handling.
+*   **Uvicorn**: An ASGI web server for Python.
+*   **Pandas**: For data manipulation, especially useful for CSV/Excel file processing.
+*   **Openpyxl**: For reading and writing Excel 2010 xlsx/xlsm/xltx/xltm files.
+
+## Setup and Installation
+
+Follow these steps to get the project up and running on your local machine.
+
+### Prerequisites
+
+*   Python 3.8+
+*   Node.js (LTS) or [Bun](https://bun.sh/docs/installation) (recommended for frontend)
+*   MySQL Server (with a database named `finance_db` and a user `root` with password `root`)
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/your-username/financial-management-dashboard.git
+cd financial-management-dashboard
 ```
 
-##### `POST /tax/deductions`
+### 2. Backend Setup
 
-Allows users to add new tax deductions.
+Navigate to the `backend` directory, create a Python virtual environment, install dependencies, and run migrations.
 
-**Example Request:**
+```bash
+cd backend
+python -m venv venv
+# On Windows
+.\venv\Scripts\activate
+# On macOS/Linux
+source venv/bin/activate
 
-```json
-{
-  "type": "PPF",
-  "amount": 50000
-}
+pip install -r requirements.txt
+pip install -r requirements-lock.txt # Ensure all dependencies are covered
+
+# Ensure your MySQL server is running and the 'finance_db' database exists.
+# If you haven't created it, log into MySQL and run: CREATE DATABASE finance_db;
+
+# Run database migrations (if using Alembic, otherwise models are created on startup)
+# Alembic setup is beyond this README's scope, but models will be created by FastAPI on first run.
+# For manual table creation on first run with FastAPI, ensure Base.metadata.create_all(bind=engine) is uncommented in main.py
+
+# Run the backend server
+uvicorn app.main:app --reload --port 8000
 ```
+The backend server will run on `http://localhost:8000`.
 
-**Example Response:**
+### 3. Frontend Setup
 
-```json
-{
-  "id": 1,
-  "user_id": 123,
-  "type": "PPF",
-  "amount": 50000,
-  "created_at": "2023-10-27T10:00:00.000Z"
-}
+Open a new terminal, navigate to the `frontend` directory, install dependencies, and start the development server.
+
+```bash
+cd ../frontend
+# Using Bun (recommended)
+bun install
+bun run dev
+
+# Using npm
+# npm install
+# npm run dev
 ```
+The frontend application will typically be accessible at `http://localhost:8080` (or `http://10.13.52.179:8080` if accessing from other devices on your local network).
 
-##### `GET /tax/suggestions`
+## Usage
 
-Provides rule-based tax-saving suggestions for the user.
+1.  **Register**: Navigate to the `/signup` page to create a new user account.
+2.  **Login**: Use your registered credentials on the `/login` page.
+3.  **Dashboard**: After logging in, you will be redirected to the dashboard, showing your financial overview.
+4.  **Add Financial Input**: Use the "Manual Financial Input" card on the dashboard to add your monthly salary, expenses, and investments. Select the month and year, then click "Save". These will be saved as transactions.
+5.  **Explore**: Navigate through different sections using the sidebar (Transactions, Tax Summary, Investments, Forecasts, Recommendations, Reports).
 
-**Example Response:**
+## Design Notes
 
-```json
-{
-  "suggestions": [
-    "Invest up to ₹1.5L in Section 80C instruments (PPF, ELSS, Insurance).",
-    "Consider NPS contributions under Section 80CCD(1B) for an extra ₹50,000 deduction."
-  ]
-}
-```
+*   **Rounded Corners**: `rounded-2xl` is used throughout the UI for a modern, soft aesthetic.
+*   **Soft Shadows**: `shadow-md` is applied to cards and key elements to give depth without being overly heavy.
+*   **Animations**: `Framer Motion` is integrated for smooth transitions, fade-in, and slide-in effects.
+*   **Charts**: `Recharts` provides interactive and customizable data visualizations.
+*   **Color Palette**: A modern, clean, finance-friendly palette with a primary blue, accent cyan, and subtle grayscale for backgrounds and text.
 
-### Investments Module
+## Contributing
 
-The Investments module allows users to track their investments, view portfolio performance, and get allocation insights.
+Contributions are welcome! Please follow standard GitHub practices: fork the repository, create a new branch for your features or bug fixes, and submit a pull request.
 
-#### Endpoints
+## License
 
-##### `POST /investments`
-
-Add a new investment for the logged-in user.
-
-**Example Request:**
-
-```json
-{
-  "type": "Stock",
-  "name": "Infosys",
-  "units": 10,
-  "buy_price": 1400,
-  "current_price": 1550
-}
-```
-
-**Example Response:**
-
-```json
-{
-  "id": 1,
-  "type": "Stock",
-  "name": "Infosys",
-  "units": 10,
-  "buy_price": 1400,
-  "current_price": 1550,
-  "user_id": 123,
-  "created_at": "2023-10-27T10:00:00.000Z"
-}
-```
-
-##### `GET /investments`
-
-Fetch all investments for the logged-in user. Supports optional filter by type.
-
-**Example Response:**
-
-```json
-[
-  {
-    "id": 1,
-    "type": "Stock",
-    "name": "Infosys",
-    "units": 10,
-    "buy_price": 1400,
-    "current_price": 1550,
-    "user_id": 123,
-    "created_at": "2023-10-27T10:00:00.000Z"
-  }
-]
-```
-
-##### `GET /investments/performance`
-
-Returns portfolio performance analysis.
-
-**Example Response:**
-
-```json
-{
-  "total_invested": 250000,
-  "current_value": 275000,
-  "pnl": 25000,
-  "allocations": {
-    "Stock": 60,
-    "Mutual Fund": 30,
-    "Gold": 10
-  }
-}
-```
-
-## Forecasting Module
-
-The Forecasting module predicts future expenses, incomes, and cashflow trends using historical transaction data.
-
-#### Endpoints
-
-##### `GET /forecasting/expenses`
-
-Returns predicted monthly expenses for the next 3-6 months. Requires JWT authentication.
-
-**Example Request:**
-
-```
-GET /forecasting/expenses?months=3
-Authorization: Bearer <your_jwt_token>
-```
-
-**Example Response:**
-
-```json
-{
-  "forecasts": [
-    { "month": "2023-05", "predicted_value": 150.75 },
-    { "month": "2023-06", "predicted_value": 150.75 },
-    { "month": "2023-07", "predicted_value": 150.75 }
-  ]
-}
-```
-
-##### `GET /forecasting/income`
-
-Returns predicted monthly income for the next 3-6 months. Requires JWT authentication.
-
-**Example Request:**
-
-```
-GET /forecasting/income?months=6
-Authorization: Bearer <your_jwt_token>
-```
-
-**Example Response:**
-
-```json
-{
-  "forecasts": [
-    { "month": "2023-05", "predicted_value": 1533.33 },
-    { "month": "2023-06", "predicted_value": 1533.33 },
-    { "month": "2023-07", "predicted_value": 1533.33 },
-    { "month": "2023-08", "predicted_value": 1533.33 },
-    { "month": "2023-09", "predicted_value": 1533.33 },
-    { "month": "2023-10", "predicted_value": 1533.33 }
-  ]
-}
-```
-
-##### `GET /forecasting/cashflow`
-
-Returns projected net cashflow (income - expenses) for the next 3-6 months. Requires JWT authentication.
-
-**Example Request:**
-
-```
-GET /forecasting/cashflow
-Authorization: Bearer <your_jwt_token>
-```
-
-**Example Response:**
-
-```json
-{
-  "forecasts": [
-    { "month": "2023-05", "predicted_value": 1382.58 },
-    { "month": "2023-06", "predicted_value": 1382.58 },
-    { "month": "2023-07", "predicted_value": 1382.58 },
-    { "month": "2023-08", "predicted_value": 1382.58 },
-    { "month": "2023-09", "predicted_value": 1382.58 },
-    { "month": "2023-10", "predicted_value": 1382.58 }
-  ]
-}
-```
-
-## Recommendations Module
-
-The Recommendations module generates personalized insights and suggestions based on user financial data (transactions, taxes, investments, and forecasts). Recommendations are currently rule-based, with an architecture designed for future integration of ML models.
-
-#### Endpoints
-
-##### `GET /recommendations/expenses`
-
-Suggests ways to cut down overspending based on transaction history. Requires JWT authentication.
-
-**Example Request:**
-
-```
-GET /recommendations/expenses
-Authorization: Bearer <your_jwt_token>
-```
-
-**Example Response:**
-
-```json
-{
-  "category": "expenses",
-  "suggestions": [
-    "Your expenses this month ($XXX.XX) are significantly higher than your average monthly expenses ($YYY.YY). Consider reviewing your spending to identify areas for cutbacks.",
-    "You spend the most on 'Food' ($ZZZ.ZZ). Look for alternatives or set a budget for this category."
-  ]
-}
-```
-
-##### `GET /recommendations/tax`
-
-Provides tax-saving suggestions based on configured deduction rules and user's current deductions. Requires JWT authentication.
-
-**Example Request:**
-
-```
-GET /recommendations/tax
-Authorization: Bearer <your_jwt_token>
-```
-
-**Example Response:**
-
-```json
-{
-  "category": "tax",
-  "suggestions": [
-    "You have utilized $XXX.XX in deductions. Consider investing in Section 80C instruments like PPF, ELSS, and life insurance to save more tax (up to $150,000).",
-    "Explore National Pension System (NPS) contributions under Section 80CCD(1B) for an additional deduction of up to $50,000."
-  ]
-}
-```
-
-##### `GET /recommendations/investments`
-
-Recommends portfolio improvements such as diversification or rebalancing based on investment data. Requires JWT authentication.
-
-**Example Request:**
-
-```
-GET /recommendations/investments
-Authorization: Bearer <your_jwt_token>
-```
-
-**Example Response:**
-
-```json
-{
-  "category": "investments",
-  "suggestions": [
-    "Your portfolio is concentrated in X asset types. Consider diversifying across more asset classes like stocks, bonds, and real estate.",
-    "You have Y investments currently at a loss. Review these positions and consider whether to hold or rebalance."
-  ]
-}
-```
-
-##### `GET /recommendations/cashflow`
-
-Alerts the user about potential negative cashflow based on forecasting data. Requires JWT authentication.
-
-**Example Request:**
-
-```
-GET /recommendations/cashflow
-Authorization: Bearer <your_jwt_token>
-```
-
-**Example Response:**
-
-```json
-{
-  "category": "cashflow",
-  "suggestions": [
-    "Alert: Your projected cashflow for YYYY-MM is negative ($-XXX.XX). Review your upcoming expenses and income to avoid a shortfall."
-  ]
-}
-```
-
-### Frontend–Backend Integration Layer
-
-The frontend communicates with the FastAPI backend using a centralized Axios instance configured in `frontend/src/api/index.js`.
-JWT authentication tokens are automatically attached to outgoing requests from `localStorage`.
-Unauthorized (401) responses are handled by clearing the local token and (in a production setup) redirecting to the login page.
-
-**API Service Files:**
-*   `frontend/src/api/auth.js`: Handles user signup, login, fetching current user details, and logout.
-*   `frontend/src/api/transactions.js`: Provides CRUD operations for transactions and transaction file uploads.
-*   `frontend/src/api/tax.js`: Includes functions for fetching tax summaries, adding deductions, and retrieving tax-saving suggestions.
-*   `frontend/src/api/investments.js`: Manages adding investments, listing all investments, and fetching portfolio performance.
-*   `frontend/src/api/forecasting.js`: Offers endpoints for retrieving expense, income, and cashflow predictions.
-*   `frontend/src/api/recommendations.js`: Fetches personalized suggestions for expenses, tax, investments, and cashflow.
-
-**Example Usage (e.g., in a React component):**
-
-```javascript
-import { getTransactions } from '../api/transactions';
-
-// ... inside an async function or useEffect
-const fetchTransactions = async () => {
-  try {
-    const data = await getTransactions();
-    console.log('Transactions:', data);
-  } catch (error) {
-    console.error('Failed to fetch transactions:', error);
-  }
-};
-```
-
-## Setup & Troubleshooting
-
-### Backend Setup
-
-*   Install Python 3.12+
-*   Create and activate a virtual environment (venv):
-
-    ```bash
-    python -m venv venv
-    venv\Scripts\activate   # on Windows
-    source venv/bin/activate # on Mac/Linux
-    ```
-*   Install dependencies with `pip install -r requirements.txt`
-*   If you encounter `ModuleNotFoundError: No module named 'pydantic_settings'`, fix it by running:
-
-    ```bash
-    python -m pip install pydantic-settings
-    ```
-*   Run the server:
-
-    ```bash
-    python -m uvicorn app.main:app --reload
-    ```
-
-### Frontend Setup
-
-*   Install Node.js 18+
-*   Navigate to the `frontend/` directory and run:
-
-    ```bash
-    npm install
-    npm run dev
-    ```
-*   If you encounter the error `'vite' is not recognized`, fix it by running:
-
-    ```bash
-    npm install vite --save-dev
-    ```
-
-### Common Errors & Fixes
-
-*   **Python module not found**: Check your virtual environment setup, install the missing package, and update `requirements.txt`.
-*   **Vite not found**: Ensure you are in the `frontend/` directory, run `npm install`, or explicitly install `vite` as a dev dependency (`npm install vite --save-dev`).
-*   **Backend/frontend connection issues**: Verify the `baseURL` in `frontend/src/api/index.js` or your `.env` file matches the backend server address (`http://localhost:8000` or `http://127.0.0.1:8000`).
-
-## Dependencies Module
-
-The `backend/app/dependencies.py` file now centralizes common FastAPI dependencies such as `get_db` (for database session management) and `get_current_user` (for JWT authentication). This promotes code reusability and maintainability across various routes and services.
-
-## Integration Verification
-
-To confirm that the frontend and backend can communicate end-to-end, follow these steps:
-
-1.  **Start the Backend:**
-    Navigate to the project root directory (`D:\Github_Repos\Project_1412`) and run:
-
-    ```bash
-    python -m uvicorn backend.app.main:app --reload
-    ```
-
-2.  **Start the Frontend:**
-    Open a **new terminal** (or ensure the backend command is running in the background) and navigate to the `frontend/` directory:
-
-    ```bash
-    cd frontend/
-    npm run dev
-    ```
-
-3.  **Open & Verify in Browser:**
-    Open your web browser and go to `http://localhost:5173`. On the Dashboard page, you should see a "Backend Health Check" card.
-
-4.  **Confirmation:**
-    If the frontend displays: `Status: ok` within the "Backend Health Check" card, then the integration is successfully verified!
-
-## Progress Log
-
-- [2025-09-05] Implemented Tax Management module (summary, deductions, suggestions).
-- [2025-09-05] Implemented Investments module (CRUD + performance analysis).
-- [2025-09-09] Implemented Forecasting Module (Phase 4): expense, income, and cashflow prediction endpoints with ML-based services.
-- [2025-09-11] Implemented Recommendations Module (Phase 5): added endpoints for expenses, tax, investments, and cashflow suggestions.
-- [2025-09-11] Implemented frontend–backend API integration layer with Axios and JWT handling.
-- [2025-09-11] Added Setup & Troubleshooting guide to README.md.
-- [2025-09-13] Added Integration Verification steps to README.md.
-- [2025-09-13] Centralized FastAPI dependencies in `backend/app/dependencies.py` and updated all relevant imports.
+This project is licensed under the MIT License - see the LICENSE file for details.

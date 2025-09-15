@@ -26,11 +26,10 @@ def get_financial_summary(
     total_expenses = sum(t.amount for t in transactions if t.amount < 0)
     net_savings = total_income + total_expenses  # expenses are negative, so add them
 
-    # Investment Value - now filtered by date
+    # Investment Value - now considering all investments, not just those created in the period
     investments = db.query(Investment).filter(
-        Investment.user_id == user_id,
-        Investment.created_at >= start_date,
-        Investment.created_at <= end_date
+        Investment.user_id == user_id
+        # Removed date filtering for investment value calculation as it should reflect total holdings
     ).all()
     print(f"Fetched {len(investments)} investments.") # Debug print
     investment_value = sum(inv.current_price * inv.units for inv in investments)
