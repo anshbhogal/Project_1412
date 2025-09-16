@@ -3,12 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from backend.app.schemas.forecasting import ForecastRequest, ForecastResponseList
-from backend.app.services import forecasting_service
-from backend.app.dependencies import get_db
-from backend.app.routes.auth import get_current_user
-from backend.app.models.transaction import Transaction
-from backend.app.schemas.schemas import User
+from ..schemas.forecasting import ForecastRequest, ForecastResponseList
+from ..services import forecasting_service
+from ..dependencies import get_db, get_current_user
+from ..models.models import Transaction
+from ..schemas.user import UserResponse
 
 router = APIRouter(prefix="/forecasting", tags=["Forecasting"])
 
@@ -17,7 +16,7 @@ router = APIRouter(prefix="/forecasting", tags=["Forecasting"])
 def get_predicted_expenses(
     request: ForecastRequest = Depends(),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: UserResponse = Depends(get_current_user),
 ):
     transactions = (
         db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
@@ -32,7 +31,7 @@ def get_predicted_expenses(
 def get_predicted_income(
     request: ForecastRequest = Depends(),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: UserResponse = Depends(get_current_user),
 ):
     transactions = (
         db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
@@ -45,7 +44,7 @@ def get_predicted_income(
 def get_projected_cashflow(
     request: ForecastRequest = Depends(),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: UserResponse = Depends(get_current_user),
 ):
     transactions = (
         db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
