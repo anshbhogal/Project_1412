@@ -13,45 +13,55 @@ def get_user_tax_deductions(db: Session, user_id: int):
 
 def calculate_tax_summary(db: Session, user_id: int) -> schemas.tax.TaxSummaryResponse:
     transactions = get_user_transactions(db, user_id)
-    
-    gross_income = sum(t.amount for t in transactions if t.category == "income")
-    
-    # Standard Deduction
-    total_deductions = settings.TAX_STANDARD_DEDUCTION
+    all_deductions = get_user_tax_deductions(db, user_id)
 
-    # 80C Deductions
-    deductions_80c = get_user_tax_deductions(db, user_id)
-    total_80c_deductions = sum(d.amount for d in deductions_80c)
-    
-    # Apply 80C cap
-    total_deductions += min(total_80c_deductions, settings.TAX_80C_CAP)
+    total_income = sum(t.amount for t in transactions if t.amount > 0)
+    total_expenses = sum(abs(t.amount) for t in transactions if t.amount < 0)
 
-    taxable_income = gross_income - total_deductions
-    if taxable_income < 0: 
+    deductions_80c = sum(d.amount for d in all_deductions if d.type == "80C")
+    deductions_80d = sum(d.amount for d in all_deductions if d.type == "80D")
+    hra_deduction = sum(d.amount for d in all_deductions if d.type == "HRA")
+    investment_deduction = sum(d.amount for d in all_deductions if d.type == "Investment")
+    
+    # For simplicity, let's cap 80C here (as per old regime rules often)
+    actual_80c_deduction = min(deductions_80c, settings.TAX_80C_CAP)
+
+    # Example: Simple standard deduction. This would be more complex with regimes.
+    standard_deduction = settings.TAX_STANDARD_DEDUCTION
+
+    total_deductions = actual_80c_deduction + deductions_80d + hra_deduction + investment_deduction + standard_deduction
+    
+    taxable_income = total_income - total_expenses - total_deductions
+    if taxable_income < 0:
         taxable_income = 0
-    
+
+    # Simplified tax liability calculation (this would also need to account for regimes)
     tax_liability = 0.0
     remaining_taxable_income = taxable_income
 
     for slab in settings.TAX_SLABS:
-        if remaining_taxable_income <= 0: 
+        if remaining_taxable_income <= 0:
             break
 
         slab_limit = slab["limit"]
         slab_rate = slab["rate"]
 
-        if slab_limit == float('inf'): # Last slab
+        if slab_limit == float('inf'):  # Last slab
             tax_liability += remaining_taxable_income * slab_rate
             remaining_taxable_income = 0
         elif remaining_taxable_income > slab_limit - settings.TAX_BASIC_EXEMPTION_LIMIT:
             income_in_slab = min(remaining_taxable_income, slab_limit - settings.TAX_BASIC_EXEMPTION_LIMIT)
             tax_liability += income_in_slab * slab_rate
             remaining_taxable_income -= income_in_slab
-        
 
     return schemas.tax.TaxSummaryResponse(
-        gross_income=gross_income,
-        deductions=total_deductions,
+        total_income=total_income,
+        total_expenses=total_expenses,
+        deductions_80c=deductions_80c,
+        deductions_80d=deductions_80d,
+        hra_deduction=hra_deduction,
+        investment_deduction=investment_deduction,
+        total_deductions=total_deductions,
         taxable_income=taxable_income,
         tax_liability=tax_liability
     )
