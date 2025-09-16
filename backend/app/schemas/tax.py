@@ -15,8 +15,13 @@ class TaxDeductionResponse(TaxDeductionCreate):
         orm_mode = True
 
 class TaxSummaryResponse(BaseModel):
-    gross_income: float
-    deductions: float
+    total_income: float
+    total_expenses: float
+    deductions_80c: float
+    deductions_80d: float
+    hra_deduction: float
+    investment_deduction: float
+    total_deductions: float
     taxable_income: float
     tax_liability: float
 
