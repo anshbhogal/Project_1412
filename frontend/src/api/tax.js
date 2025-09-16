@@ -1,9 +1,9 @@
 
 import apiClient from './index';
 
-export async function getTaxSummary() {
+export async function getTaxSummary(params = {}) {
     try {
-        const response = await apiClient.get('/tax/summary');
+        const response = await apiClient.get('/tax/summary', { params });
         return response.data;
     } catch (error) {
         console.error("Error fetching tax summary:", error.response?.data || error.message);
