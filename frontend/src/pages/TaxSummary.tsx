@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { DollarSign, TrendingUp, TrendingDown, Wallet, Percent, ShieldHalf } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Wallet, Percent, ShieldHalf, CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -14,7 +14,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, getYear, startOfMonth, endOfMonth } from "date-fns";
+import { cn } from "@/lib/utils";
 import { getTaxSummary } from "../api/tax";
+
+interface TaxSummaryData {
+  total_income: number;
+  total_expenses: number;
+  deductions_80c: number;
+  deductions_80d: number;
+  hra_deduction: number;
+  investment_deduction: number;
+  total_deductions: number;
+  taxable_income: number;
+  tax_liability: number;
+}
 
 function TaxBarChart({ data }) {
   return (
@@ -49,20 +66,15 @@ function TaxBarChart({ data }) {
 }
 
 export default function TaxSummary() {
-  const [taxSummary, setTaxSummary] = useState(null);
+  const [taxSummaryData, setTaxSummaryData] = useState<TaxSummaryData | null>(null);
   const [monthlyTaxData, setMonthlyTaxData] = useState([]);
 
-  // Local state for financial inputs
-  const [totalIncome, setTotalIncome] = useState(500000); // Placeholder
-  const [totalExpenses, setTotalExpenses] = useState(200000); // Placeholder
-  const [deductions80C, setDeductions80C] = useState(0);
-  const [deductions80D, setDeductions80D] = useState(0);
-  const [hraDeduction, setHraDeduction] = useState(0);
-  const [investmentDeduction, setInvestmentDeduction] = useState(0);
+  const [selectedPeriodMonth, setSelectedPeriodMonth] = useState<string>(format(new Date(), 'MM'));
+  const [selectedPeriodYear, setSelectedPeriodYear] = useState<string>(String(getYear(new Date())));
 
   const [isNewRegime, setIsNewRegime] = useState(false);
 
-  const formatCurrency = (value) => {
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
@@ -71,15 +83,14 @@ export default function TaxSummary() {
     }).format(value);
   };
 
-  // Placeholder for tax calculation logic
-  const calculateTax = (income, deductions, regime) => {
+  // Tax calculation logic (now uses fetched data when available, otherwise defaults)
+  const calculateTax = (income: number, deductions: number, regime: string) => {
     let taxableIncome = income - deductions;
     if (taxableIncome < 0) taxableIncome = 0;
 
     let tax = 0;
 
     if (regime === 'old') {
-      // Old Regime Slabs (simplified for example)
       if (taxableIncome <= 250000) {
         tax = 0;
       } else if (taxableIncome <= 500000) {
@@ -89,7 +100,7 @@ export default function TaxSummary() {
       } else {
         tax = 112500 + (taxableIncome - 1000000) * 0.30;
       }
-    } else { // New Regime Slabs (simplified for example)
+    } else { // New Regime Slabs
       if (taxableIncome <= 300000) {
         tax = 0;
       } else if (taxableIncome <= 600000) {
@@ -107,50 +118,81 @@ export default function TaxSummary() {
     return tax;
   };
 
-  const totalDeductions = useMemo(() => {
-    return deductions80C + deductions80D + hraDeduction + investmentDeduction;
-  }, [deductions80C, deductions80D, hraDeduction, investmentDeduction]);
+  // Use memoized values for calculations based on fetched data or local inputs
+  const currentTotalIncome = taxSummaryData?.total_income || 0;
+  const currentTotalExpenses = taxSummaryData?.total_expenses || 0;
+  const currentDeductions80C = taxSummaryData?.deductions_80c || 0;
+  const currentDeductions80D = taxSummaryData?.deductions_80d || 0;
+  const currentHraDeduction = taxSummaryData?.hra_deduction || 0;
+  const currentInvestmentDeduction = taxSummaryData?.investment_deduction || 0;
 
-  const taxableIncome = useMemo(() => {
-    return totalIncome - (totalExpenses + totalDeductions);
-  }, [totalIncome, totalExpenses, totalDeductions]);
+  const effectiveTotalDeductions = useMemo(() => {
+    // Frontend logic for deductions, allowing user input to override/supplement fetched data
+    // For now, we'll just use fetched data if available, otherwise 0
+    return currentDeductions80C + currentDeductions80D + currentHraDeduction + currentInvestmentDeduction;
+  }, [currentDeductions80C, currentDeductions80D, currentHraDeduction, currentInvestmentDeduction]);
+
+  const effectiveTaxableIncome = useMemo(() => {
+    return currentTotalIncome - (currentTotalExpenses + effectiveTotalDeductions);
+  }, [currentTotalIncome, currentTotalExpenses, effectiveTotalDeductions]);
 
   const currentTaxLiability = useMemo(() => {
-    return calculateTax(totalIncome, (totalExpenses + totalDeductions), isNewRegime ? 'new' : 'old');
-  }, [totalIncome, totalExpenses, totalDeductions, isNewRegime]);
+    return calculateTax(currentTotalIncome, (currentTotalExpenses + effectiveTotalDeductions), isNewRegime ? 'new' : 'old');
+  }, [currentTotalIncome, currentTotalExpenses, effectiveTotalDeductions, isNewRegime]);
 
   const taxLiabilityNoDeductions = useMemo(() => {
-    return calculateTax(totalIncome, totalExpenses, isNewRegime ? 'new' : 'old');
-  }, [totalIncome, totalExpenses, isNewRegime]);
+    return calculateTax(currentTotalIncome, currentTotalExpenses, isNewRegime ? 'new' : 'old');
+  }, [currentTotalIncome, currentTotalExpenses, isNewRegime]);
 
   const taxSavings = useMemo(() => {
     return taxLiabilityNoDeductions - currentTaxLiability;
   }, [taxLiabilityNoDeductions, currentTaxLiability]);
 
-  // Placeholder for pie chart data
   const pieChartData = useMemo(() => {
     return [
-      { name: 'Income', value: totalIncome, color: '#007bff' }, // Blue
-      { name: 'Expenses', value: totalExpenses, color: '#ff7f0e' }, // Orange
-      { name: 'Deductions', value: totalDeductions, color: '#28a745' }, // Green
+      { name: 'Income', value: currentTotalIncome, color: '#007bff' }, // Blue
+      { name: 'Expenses', value: currentTotalExpenses, color: '#ff7f0e' }, // Orange
+      { name: 'Deductions', value: effectiveTotalDeductions, color: '#28a745' }, // Green
     ];
-  }, [totalIncome, totalExpenses, totalDeductions]);
+  }, [currentTotalIncome, currentTotalExpenses, effectiveTotalDeductions]);
 
-  // Colors for the pie chart cells
   const PIE_COLORS = pieChartData.map(d => d.color);
 
   useEffect(() => {
-    // Removed the backend call for now as per instruction
-    // In a real app, the backend would provide this.
-    setMonthlyTaxData([ 
-      { month: "Jan", liability: currentTaxLiability * 0.15 },
-      { month: "Feb", liability: currentTaxLiability * 0.10 },
-      { month: "Mar", liability: currentTaxLiability * 0.20 },
-      { month: "Apr", liability: currentTaxLiability * 0.10 },
-      { month: "May", liability: currentTaxLiability * 0.25 },
-      { month: "Jun", liability: currentTaxLiability * 0.20 },
-    ]);
-  }, [currentTaxLiability]);
+    const fetchTaxData = async () => {
+      const currentPeriodDate = new Date(Number(selectedPeriodYear), Number(selectedPeriodMonth) - 1, 1);
+      const monthStart = startOfMonth(currentPeriodDate);
+      const monthEnd = endOfMonth(currentPeriodDate);
+
+      try {
+        const data = await getTaxSummary({
+          start_date: format(monthStart, "yyyy-MM-dd"),
+          end_date: format(monthEnd, "yyyy-MM-dd"),
+        });
+        setTaxSummaryData(data);
+        // Populate monthlyTaxData for the chart (simplified for now)
+        setMonthlyTaxData([
+          { month: "Jan", liability: data.tax_liability * 0.15 },
+          { month: "Feb", liability: data.tax_liability * 0.10 },
+          { month: "Mar", liability: data.tax_liability * 0.20 },
+          { month: "Apr", liability: data.tax_liability * 0.10 },
+          { month: "May", liability: data.tax_liability * 0.25 },
+          { month: "Jun", liability: data.tax_liability * 0.20 },
+        ]);
+      } catch (error) {
+        console.error("Error fetching tax summary:", error);
+        setTaxSummaryData(null); // Clear data on error
+      }
+    };
+    fetchTaxData();
+  }, [selectedPeriodMonth, selectedPeriodYear]);
+
+  // Months and Years for selection
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: format(new Date(0, i), 'MM'),
+    label: format(new Date(0, i), 'MMMM'),
+  }));
+  const years = Array.from({ length: 5 }, (_, i) => String(getYear(new Date()) - 2 + i));
 
   return (
     <div className="space-y-6 p-6">
@@ -166,6 +208,30 @@ export default function TaxSummary() {
             checked={isNewRegime}
             onCheckedChange={setIsNewRegime}
           />
+          <Select value={selectedPeriodMonth} onValueChange={setSelectedPeriodMonth}>
+            <SelectTrigger className="w-[140px] rounded-md">
+              <SelectValue placeholder="Select Month" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedPeriodYear} onValueChange={setSelectedPeriodYear}>
+            <SelectTrigger className="w-[100px] rounded-md">
+              <SelectValue placeholder="Select Year" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              {years.map((year) => (
+                <SelectItem key={year} value={year}>
+                  {year}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -177,7 +243,7 @@ export default function TaxSummary() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              {formatCurrency(totalIncome)}
+              {formatCurrency(currentTotalIncome)}
             </div>
             <p className="text-xs text-muted-foreground mt-2"></p>
           </CardContent>
@@ -190,7 +256,7 @@ export default function TaxSummary() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              {formatCurrency(totalExpenses)}
+              {formatCurrency(currentTotalExpenses)}
             </div>
             <p className="text-xs text-muted-foreground mt-2"></p>
           </CardContent>
@@ -203,7 +269,7 @@ export default function TaxSummary() {
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              {formatCurrency(taxableIncome)}
+              {formatCurrency(effectiveTaxableIncome)}
             </div>
             <p className="text-xs text-muted-foreground mt-2"></p>
           </CardContent>
@@ -237,8 +303,8 @@ export default function TaxSummary() {
                 <Input
                   id="80c"
                   type="number"
-                  value={deductions80C}
-                  onChange={(e) => setDeductions80C(parseFloat(e.target.value) || 0)}
+                  value={currentDeductions80C}
+                  onChange={(e) => setTaxSummaryData(prev => prev ? { ...prev, deductions_80c: parseFloat(e.target.value) || 0 } : null)}
                   placeholder="e.g., 150000"
                   className="mt-1"
                 />
@@ -248,8 +314,8 @@ export default function TaxSummary() {
                 <Input
                   id="80d"
                   type="number"
-                  value={deductions80D}
-                  onChange={(e) => setDeductions80D(parseFloat(e.target.value) || 0)}
+                  value={currentDeductions80D}
+                  onChange={(e) => setTaxSummaryData(prev => prev ? { ...prev, deductions_80d: parseFloat(e.target.value) || 0 } : null)}
                   placeholder="e.g., 25000"
                   className="mt-1"
                 />
@@ -259,8 +325,8 @@ export default function TaxSummary() {
                 <Input
                   id="hra"
                   type="number"
-                  value={hraDeduction}
-                  onChange={(e) => setHraDeduction(parseFloat(e.target.value) || 0)}
+                  value={currentHraDeduction}
+                  onChange={(e) => setTaxSummaryData(prev => prev ? { ...prev, hra_deduction: parseFloat(e.target.value) || 0 } : null)}
                   placeholder="e.g., 60000"
                   className="mt-1"
                 />
@@ -270,8 +336,8 @@ export default function TaxSummary() {
                 <Input
                   id="investments"
                   type="number"
-                  value={investmentDeduction}
-                  onChange={(e) => setInvestmentDeduction(parseFloat(e.target.value) || 0)}
+                  value={currentInvestmentDeduction}
+                  onChange={(e) => setTaxSummaryData(prev => prev ? { ...prev, investment_deduction: parseFloat(e.target.value) || 0 } : null)}
                   placeholder="e.g., 50000"
                   className="mt-1"
                 />
