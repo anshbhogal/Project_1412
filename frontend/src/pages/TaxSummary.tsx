@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -172,6 +173,28 @@ export default function TaxSummary() {
 
   const PIE_COLORS = pieChartData.map(d => d.color);
 
+  const DEDUCTION_CAPS = useMemo(() => ({
+    '80C': 150000,
+    '80D': 25000, // Simplified, can be 50000 for seniors
+    HRA: Infinity, // HRA calculation is complex and depends on many factors
+    home_loan: 200000,
+    NPS: 50000,
+    donations: Infinity, // 80G has complex limits, simplifying for UI
+  }), []);
+
+  const getProgressValue = (deductionKey: string) => {
+    const currentAmount = deductionInputs[deductionKey as keyof typeof deductionInputs];
+    const cap = DEDUCTION_CAPS[deductionKey as keyof typeof DEDUCTION_CAPS];
+    if (cap === Infinity) return 100; // No cap, always show full
+    return Math.min((currentAmount / cap) * 100, 100);
+  };
+
+  const getProgressLabel = (deductionKey: string) => {
+    const currentAmount = deductionInputs[deductionKey as keyof typeof deductionInputs];
+    const cap = DEDUCTION_CAPS[deductionKey as keyof typeof DEDUCTION_CAPS];
+    if (cap === Infinity) return `${formatCurrency(currentAmount)} Used`;
+    return `${formatCurrency(currentAmount)} / ${formatCurrency(cap)} Used`;
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -287,6 +310,8 @@ export default function TaxSummary() {
                   placeholder="e.g., 150000"
                   className="mt-1"
                 />
+                <Progress value={getProgressValue('80C')} className="mt-2" />
+                <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('80C')}</p>
               </div>
               <div>
                 <Label htmlFor="80d">80D Deductions</Label>
@@ -298,6 +323,8 @@ export default function TaxSummary() {
                   placeholder="e.g., 25000"
                   className="mt-1"
                 />
+                <Progress value={getProgressValue('80D')} className="mt-2" />
+                <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('80D')}</p>
               </div>
               <div>
                 <Label htmlFor="hra">HRA Exemption</Label>
@@ -309,6 +336,8 @@ export default function TaxSummary() {
                   placeholder="e.g., 60000"
                   className="mt-1"
                 />
+                <Progress value={getProgressValue('HRA')} className="mt-2" />
+                <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('HRA')}</p>
               </div>
               <div>
                 <Label htmlFor="home_loan">Home Loan Interest (24b)</Label>
@@ -320,6 +349,8 @@ export default function TaxSummary() {
                   placeholder="e.g., 200000"
                   className="mt-1"
                 />
+                <Progress value={getProgressValue('home_loan')} className="mt-2" />
+                <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('home_loan')}</p>
               </div>
               <div>
                 <Label htmlFor="nps">NPS (80CCD(1B))</Label>
@@ -331,6 +362,8 @@ export default function TaxSummary() {
                   placeholder="e.g., 50000"
                   className="mt-1"
                 />
+                <Progress value={getProgressValue('NPS')} className="mt-2" />
+                <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('NPS')}</p>
               </div>
               <div>
                 <Label htmlFor="donations">Donations (80G)</Label>
@@ -342,6 +375,8 @@ export default function TaxSummary() {
                   placeholder="e.g., 10000"
                   className="mt-1"
                 />
+                <Progress value={getProgressValue('donations')} className="mt-2" />
+                <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('donations')}</p>
               </div>
             </div>
           </CardContent>
