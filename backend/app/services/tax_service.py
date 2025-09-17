@@ -89,3 +89,116 @@ def get_tax_suggestions(db: Session, user_id: int) -> schemas.tax.TaxSuggestionR
     suggestions.append("Consider NPS contributions under Section 80CCD(1B) for an extra ₹50,000 deduction.")
 
     return schemas.tax.TaxSuggestionResponse(suggestions=suggestions)
+
+def calculate_tax(income: float, expenses: float, deductions_input: dict, regime: str, slabs_data: dict) -> schemas.tax.TaxCalculationResponse:
+    # Define deduction caps
+    DEDUCTION_CAPS = {
+        "80C": 150000,
+        "80D": {"default": 25000, "senior": 50000},  # Assuming default for now, can be expanded
+        "80CCD(1B)": 50000, # NPS
+        "24b": 200000, # Home Loan Interest
+        "80G": float('inf') # No direct cap, but percentage limits apply, simplifying for now
+    }
+
+    deductions_used = {
+        "80C": 0,
+        "80D": 0,
+        "HRA": 0,
+        "home_loan": 0,
+        "NPS": 0,
+        "donations": 0
+    }
+
+    # Apply statutory caps to deductions
+    deductions_used["80C"] = min(deductions_input.get("80C", 0), DEDUCTION_CAPS["80C"])
+    deductions_used["80D"] = min(deductions_input.get("80D", 0), DEDUCTION_CAPS["80D"]["default"])
+    deductions_used["HRA"] = deductions_input.get("HRA", 0) # HRA calculation is complex, keeping it simple for now
+    deductions_used["home_loan"] = min(deductions_input.get("home_loan", 0), DEDUCTION_CAPS["24b"])
+    deductions_used["NPS"] = min(deductions_input.get("NPS", 0), DEDUCTION_CAPS["80CCD(1B)"])
+    deductions_used["donations"] = deductions_input.get("donations", 0) # Simplifying 80G for now
+
+    total_deductions = sum(deductions_used.values())
+
+    # Calculate taxable income
+    taxable_income = income - expenses - total_deductions
+    if taxable_income < 0:
+        taxable_income = 0
+
+    tax_liability = 0.0
+    regime_slabs = slabs_data.get("india", {}).get(regime.lower(), [])
+
+    for slab in regime_slabs:
+        min_income = slab["min_income"]
+        max_income = slab["max_income"]
+        tax_rate = slab["tax_rate"]
+
+        if taxable_income > min_income:
+            income_in_slab = min(taxable_income, max_income) - min_income
+            tax_liability += income_in_slab * tax_rate
+
+    # Calculate tax liability without deductions for comparison
+    taxable_income_without_deductions = income - expenses
+    if taxable_income_without_deductions < 0:
+        taxable_income_without_deductions = 0
+
+    tax_liability_without_deductions = 0.0
+    for slab in regime_slabs:
+        min_income = slab["min_income"]
+        max_income = slab["max_income"]
+        tax_rate = slab["tax_rate"]
+
+        if taxable_income_without_deductions > min_income:
+            income_in_slab = min(taxable_income_without_deductions, max_income) - min_income
+            tax_liability_without_deductions += income_in_slab * tax_rate
+
+    tax_savings = tax_liability_without_deductions - tax_liability
+
+    # Compare regimes (simplified, assuming we calculate both for comparison)
+    old_regime_slabs = slabs_data.get("india", {}).get("old_regime", [])
+    new_regime_slabs = slabs_data.get("india", {}).get("new_regime", [])
+
+    old_regime_tax_liability = 0.0
+    new_regime_tax_liability = 0.0
+
+    # Calculate old regime tax liability with deductions
+    old_regime_taxable_income = income - expenses - total_deductions # Assuming same deductions for comparison
+    if old_regime_taxable_income < 0:
+        old_regime_taxable_income = 0
+
+    for slab in old_regime_slabs:
+        min_income = slab["min_income"]
+        max_income = slab["max_income"]
+        tax_rate = slab["tax_rate"]
+
+        if old_regime_taxable_income > min_income:
+            income_in_slab = min(old_regime_taxable_income, max_income) - min_income
+            old_regime_tax_liability += income_in_slab * tax_rate
+
+    # Calculate new regime tax liability without most deductions (standard deduction only for new regime)
+    # Note: New regime generally has no 80C, 80D, HRA deductions, but has a standard deduction
+    new_regime_total_deductions = 0 # Most common scenario for new regime
+    new_regime_taxable_income = income - expenses - new_regime_total_deductions
+    if new_regime_taxable_income < 0:
+        new_regime_taxable_income = 0
+
+    for slab in new_regime_slabs:
+        min_income = slab["min_income"]
+        max_income = slab["max_income"]
+        tax_rate = slab["tax_rate"]
+
+        if new_regime_taxable_income > min_income:
+            income_in_slab = min(new_regime_taxable_income, max_income) - min_income
+            new_regime_tax_liability += income_in_slab * tax_rate
+
+    regime_better = "Old Regime" if old_regime_tax_liability < new_regime_tax_liability else "New Regime"
+
+    return schemas.tax.TaxCalculationResponse(
+        taxable_income=taxable_income,
+        tax_liability=tax_liability,
+        tax_liability_without_deductions=tax_liability_without_deductions,
+        tax_savings=tax_savings,
+        regime_better=regime_better,
+        old_regime_tax_liability=old_regime_tax_liability,
+        new_regime_tax_liability=new_regime_tax_liability,
+        deductions_used=deductions_used
+    )
