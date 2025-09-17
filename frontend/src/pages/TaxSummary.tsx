@@ -280,15 +280,28 @@ export default function TaxSummary() {
 
   const taxSavings = taxCalculation?.tax_savings || 0;
 
+  const oldRegimeTaxLiability = taxCalculation?.old_regime_tax_liability || 0;
+  const newRegimeTaxLiability = taxCalculation?.new_regime_tax_liability || 0;
+
+  const regimeSavings = useMemo(() => {
+    if (oldRegimeTaxLiability < newRegimeTaxLiability) {
+      return newRegimeTaxLiability - oldRegimeTaxLiability;
+    } else if (newRegimeTaxLiability < oldRegimeTaxLiability) {
+      return oldRegimeTaxLiability - newRegimeTaxLiability;
+    } else {
+      return 0;
+    }
+  }, [oldRegimeTaxLiability, newRegimeTaxLiability]);
+
   const savingsCardColorClass = useMemo(() => {
-    if (taxSavings > 10000) { // Example threshold for "good savings"
+    if (oldRegimeTaxLiability < newRegimeTaxLiability) {
       return "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200";
-    } else if (taxSavings > 0) {
+    } else if (newRegimeTaxLiability < oldRegimeTaxLiability) {
       return "bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200";
     } else {
-      return "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"; // Default if no savings or negative
+      return "bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200";
     }
-  }, [taxSavings]);
+  }, [oldRegimeTaxLiability, newRegimeTaxLiability]);
 
   const pieChartData = useMemo(() => {
     return [
@@ -478,21 +491,21 @@ export default function TaxSummary() {
 
         <Card className={`shadow-md rounded-2xl ${savingsCardColorClass}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-semibold">Tax Liability</CardTitle>
+            <CardTitle className="text-lg font-semibold">Tax Saved</CardTitle>
             <Percent className="h-5 w-5" />
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-bold">
-              {formatCurrency(currentTaxLiability)}
+              <AnimatedNumber value={regimeSavings} format={formatCurrency} />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Tax Savings: <span className="font-semibold">{formatCurrency(taxSavings)}</span> compared to no deductions.
+              Compared to the other regime.
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="shadow-md rounded-2xl">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Deductions Input</CardTitle>
@@ -665,7 +678,7 @@ export default function TaxSummary() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md rounded-2xl col-span-1 lg:col-span-2">
+        <Card className="shadow-md rounded-2xl">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-semibold">Monthly Tax Trend</CardTitle>
             <div className="flex items-center space-x-2">
@@ -682,7 +695,7 @@ export default function TaxSummary() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md rounded-2xl col-span-1 lg:col-span-2">
+        <Card className="shadow-md rounded-2xl">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Regime Comparison & Suggestions</CardTitle>
           </CardHeader>
@@ -713,7 +726,7 @@ export default function TaxSummary() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md rounded-2xl col-span-1 lg:col-span-2">
+        <Card className="shadow-md rounded-2xl">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">Scenario Simulator</CardTitle>
           </CardHeader>
