@@ -19,7 +19,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format, getYear, startOfMonth, endOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
-import { getTaxSummary } from "../api/tax";
+import { useQuery } from '@tanstack/react-query';
+import { getTaxSummary, getTaxSlabs, calculateTax } from "../api/tax";
 
 interface TaxSummaryData {
   total_income: number;
@@ -73,6 +74,64 @@ export default function TaxSummary() {
   const [selectedPeriodYear, setSelectedPeriodYear] = useState<string>(String(getYear(new Date())));
 
   const [isNewRegime, setIsNewRegime] = useState(false);
+  const [deductionInputs, setDeductionInputs] = useState({
+    '80C': 0,
+    '80D': 0,
+    HRA: 0,
+    home_loan: 0,
+    NPS: 0,
+    donations: 0,
+  });
+
+  const { data: taxSummary, isLoading: isLoadingSummary, error: errorSummary } = useQuery({
+    queryKey: ['taxSummary', selectedPeriodMonth, selectedPeriodYear],
+    queryFn: () => {
+      const currentPeriodDate = new Date(Number(selectedPeriodYear), Number(selectedPeriodMonth) - 1, 1);
+      const monthStart = startOfMonth(currentPeriodDate);
+      const monthEnd = endOfMonth(currentPeriodDate);
+      return getTaxSummary({
+        start_date: format(monthStart, "yyyy-MM-dd"),
+        end_date: format(monthEnd, "yyyy-MM-dd"),
+      });
+    },
+  });
+
+  const { data: taxSlabs, isLoading: isLoadingSlabs, error: errorSlabs } = useQuery({
+    queryKey: ['taxSlabs', 'india', isNewRegime ? 'new' : 'old'],
+    queryFn: () => getTaxSlabs('india', isNewRegime ? 'new' : 'old'),
+  });
+
+  const { data: taxCalculation, isLoading: isLoadingCalculation, error: errorCalculation } = useQuery({
+    queryKey: ['taxCalculation', taxSummary, deductionInputs, isNewRegime],
+    queryFn: () => {
+      if (!taxSummary) return null;
+      return calculateTax({
+        income: taxSummary.total_income,
+        expenses: taxSummary.total_expenses,
+        deductions: deductionInputs,
+        regime: isNewRegime ? 'new' : 'old',
+      });
+    },
+    enabled: !!taxSummary, // Only run if taxSummary is available
+  });
+
+  useEffect(() => {
+    if (taxSummary) {
+      setTaxSummaryData(taxSummary);
+      // Populate monthlyTaxData for the chart (simplified for now)
+      setMonthlyTaxData([
+        { month: "Jan", liability: taxSummary.tax_liability * 0.15 },
+        { month: "Feb", liability: taxSummary.tax_liability * 0.10 },
+        { month: "Mar", liability: taxSummary.tax_liability * 0.20 },
+        { month: "Apr", liability: taxSummary.tax_liability * 0.10 },
+        { month: "May", liability: taxSummary.tax_liability * 0.25 },
+        { month: "Jun", liability: taxSummary.tax_liability * 0.20 },
+      ]);
+    }
+  }, [taxSummary]);
+
+  if (isLoadingSummary || isLoadingSlabs || isLoadingCalculation) return <div>Loading tax data...</div>;
+  if (errorSummary || errorSlabs || errorCalculation) return <div>Error: Could not fetch tax data. Please retry.</div>;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -83,70 +142,25 @@ export default function TaxSummary() {
     }).format(value);
   };
 
-  // Tax calculation logic (now uses fetched data when available, otherwise defaults)
-  const calculateTax = (income: number, deductions: number, regime: string) => {
-    let taxableIncome = income - deductions;
-    if (taxableIncome < 0) taxableIncome = 0;
-
-    let tax = 0;
-
-    if (regime === 'old') {
-      if (taxableIncome <= 250000) {
-        tax = 0;
-      } else if (taxableIncome <= 500000) {
-        tax = (taxableIncome - 250000) * 0.05;
-      } else if (taxableIncome <= 1000000) {
-        tax = 12500 + (taxableIncome - 500000) * 0.20;
-      } else {
-        tax = 112500 + (taxableIncome - 1000000) * 0.30;
-      }
-    } else { // New Regime Slabs
-      if (taxableIncome <= 300000) {
-        tax = 0;
-      } else if (taxableIncome <= 600000) {
-        tax = (taxableIncome - 300000) * 0.05;
-      } else if (taxableIncome <= 900000) {
-        tax = 15000 + (taxableIncome - 600000) * 0.10;
-      } else if (taxableIncome <= 1200000) {
-        tax = 45000 + (taxableIncome - 900000) * 0.15;
-      } else if (taxableIncome <= 1500000) {
-        tax = 90000 + (taxableIncome - 1200000) * 0.20;
-      } else {
-        tax = 150000 + (taxableIncome - 1500000) * 0.30;
-      }
-    }
-    return tax;
+  const handleDeductionChange = (key: string, value: string) => {
+    setDeductionInputs(prev => ({
+      ...prev,
+      [key]: parseFloat(value) || 0,
+    }));
   };
 
-  // Use memoized values for calculations based on fetched data or local inputs
-  const currentTotalIncome = taxSummaryData?.total_income || 0;
-  const currentTotalExpenses = taxSummaryData?.total_expenses || 0;
-  const currentDeductions80C = taxSummaryData?.deductions_80c || 0;
-  const currentDeductions80D = taxSummaryData?.deductions_80d || 0;
-  const currentHraDeduction = taxSummaryData?.hra_deduction || 0;
-  const currentInvestmentDeduction = taxSummaryData?.investment_deduction || 0;
+  const currentTotalIncome = taxCalculation?.income || taxSummaryData?.total_income || 0;
+  const currentTotalExpenses = taxCalculation?.expenses || taxSummaryData?.total_expenses || 0;
 
-  const effectiveTotalDeductions = useMemo(() => {
-    // Frontend logic for deductions, allowing user input to override/supplement fetched data
-    // For now, we'll just use fetched data if available, otherwise 0
-    return currentDeductions80C + currentDeductions80D + currentHraDeduction + currentInvestmentDeduction;
-  }, [currentDeductions80C, currentDeductions80D, currentHraDeduction, currentInvestmentDeduction]);
+  const effectiveTotalDeductions = taxCalculation?.deductions_used ? Object.values(taxCalculation.deductions_used).reduce((acc: number, curr: any) => acc + curr, 0) : 0;
 
-  const effectiveTaxableIncome = useMemo(() => {
-    return currentTotalIncome - (currentTotalExpenses + effectiveTotalDeductions);
-  }, [currentTotalIncome, currentTotalExpenses, effectiveTotalDeductions]);
+  const effectiveTaxableIncome = taxCalculation?.taxable_income || 0;
 
-  const currentTaxLiability = useMemo(() => {
-    return calculateTax(currentTotalIncome, (currentTotalExpenses + effectiveTotalDeductions), isNewRegime ? 'new' : 'old');
-  }, [currentTotalIncome, currentTotalExpenses, effectiveTotalDeductions, isNewRegime]);
+  const currentTaxLiability = taxCalculation?.tax_liability || 0;
 
-  const taxLiabilityNoDeductions = useMemo(() => {
-    return calculateTax(currentTotalIncome, currentTotalExpenses, isNewRegime ? 'new' : 'old');
-  }, [currentTotalIncome, currentTotalExpenses, isNewRegime]);
+  const taxLiabilityNoDeductions = taxCalculation?.tax_liability_without_deductions || 0;
 
-  const taxSavings = useMemo(() => {
-    return taxLiabilityNoDeductions - currentTaxLiability;
-  }, [taxLiabilityNoDeductions, currentTaxLiability]);
+  const taxSavings = taxCalculation?.tax_savings || 0;
 
   const pieChartData = useMemo(() => {
     return [
@@ -158,41 +172,6 @@ export default function TaxSummary() {
 
   const PIE_COLORS = pieChartData.map(d => d.color);
 
-  useEffect(() => {
-    const fetchTaxData = async () => {
-      const currentPeriodDate = new Date(Number(selectedPeriodYear), Number(selectedPeriodMonth) - 1, 1);
-      const monthStart = startOfMonth(currentPeriodDate);
-      const monthEnd = endOfMonth(currentPeriodDate);
-
-      try {
-        const data = await getTaxSummary({
-          start_date: format(monthStart, "yyyy-MM-dd"),
-          end_date: format(monthEnd, "yyyy-MM-dd"),
-        });
-        setTaxSummaryData(data);
-        // Populate monthlyTaxData for the chart (simplified for now)
-        setMonthlyTaxData([
-          { month: "Jan", liability: data.tax_liability * 0.15 },
-          { month: "Feb", liability: data.tax_liability * 0.10 },
-          { month: "Mar", liability: data.tax_liability * 0.20 },
-          { month: "Apr", liability: data.tax_liability * 0.10 },
-          { month: "May", liability: data.tax_liability * 0.25 },
-          { month: "Jun", liability: data.tax_liability * 0.20 },
-        ]);
-      } catch (error) {
-        console.error("Error fetching tax summary:", error);
-        setTaxSummaryData(null); // Clear data on error
-      }
-    };
-    fetchTaxData();
-  }, [selectedPeriodMonth, selectedPeriodYear]);
-
-  // Months and Years for selection
-  const months = Array.from({ length: 12 }, (_, i) => ({
-    value: format(new Date(0, i), 'MM'),
-    label: format(new Date(0, i), 'MMMM'),
-  }));
-  const years = Array.from({ length: 5 }, (_, i) => String(getYear(new Date()) - 2 + i));
 
   return (
     <div className="space-y-6 p-6">
@@ -303,8 +282,8 @@ export default function TaxSummary() {
                 <Input
                   id="80c"
                   type="number"
-                  value={currentDeductions80C}
-                  onChange={(e) => setTaxSummaryData(prev => prev ? { ...prev, deductions_80c: parseFloat(e.target.value) || 0 } : null)}
+                  value={deductionInputs['80C']}
+                  onChange={(e) => handleDeductionChange('80C', e.target.value)}
                   placeholder="e.g., 150000"
                   className="mt-1"
                 />
@@ -314,8 +293,8 @@ export default function TaxSummary() {
                 <Input
                   id="80d"
                   type="number"
-                  value={currentDeductions80D}
-                  onChange={(e) => setTaxSummaryData(prev => prev ? { ...prev, deductions_80d: parseFloat(e.target.value) || 0 } : null)}
+                  value={deductionInputs['80D']}
+                  onChange={(e) => handleDeductionChange('80D', e.target.value)}
                   placeholder="e.g., 25000"
                   className="mt-1"
                 />
@@ -325,20 +304,42 @@ export default function TaxSummary() {
                 <Input
                   id="hra"
                   type="number"
-                  value={currentHraDeduction}
-                  onChange={(e) => setTaxSummaryData(prev => prev ? { ...prev, hra_deduction: parseFloat(e.target.value) || 0 } : null)}
+                  value={deductionInputs.HRA}
+                  onChange={(e) => handleDeductionChange('HRA', e.target.value)}
                   placeholder="e.g., 60000"
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="investments">Other Investments/Deductions</Label>
+                <Label htmlFor="home_loan">Home Loan Interest (24b)</Label>
                 <Input
-                  id="investments"
+                  id="home_loan"
                   type="number"
-                  value={currentInvestmentDeduction}
-                  onChange={(e) => setTaxSummaryData(prev => prev ? { ...prev, investment_deduction: parseFloat(e.target.value) || 0 } : null)}
+                  value={deductionInputs.home_loan}
+                  onChange={(e) => handleDeductionChange('home_loan', e.target.value)}
+                  placeholder="e.g., 200000"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="nps">NPS (80CCD(1B))</Label>
+                <Input
+                  id="nps"
+                  type="number"
+                  value={deductionInputs.NPS}
+                  onChange={(e) => handleDeductionChange('NPS', e.target.value)}
                   placeholder="e.g., 50000"
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="donations">Donations (80G)</Label>
+                <Input
+                  id="donations"
+                  type="number"
+                  value={deductionInputs.donations}
+                  onChange={(e) => handleDeductionChange('donations', e.target.value)}
+                  placeholder="e.g., 10000"
                   className="mt-1"
                 />
               </div>
