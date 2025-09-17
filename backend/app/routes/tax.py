@@ -9,6 +9,7 @@ from ..models.models import Transaction as ModelTransaction, TaxDeduction as Mod
 from ..dependencies import get_db, get_current_user
 from ..services import tax_service
 from ..schemas.user import UserResponse
+from ..schemas.tax import TaxCalculationRequest, TaxCalculationResponse
 
 router = APIRouter()
 
@@ -43,3 +44,21 @@ def get_tax_slabs(country: str = "india", regime: str = "old"):
         raise HTTPException(status_code=404, detail=f"Tax regime {regime} for country {country} not found")
 
     return slabs_data[country.lower()][regime.lower()]
+
+@router.post("/calculate", response_model=TaxCalculationResponse)
+def calculate_tax_route(
+    request: TaxCalculationRequest,
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    script_dir = os.path.dirname(__file__)
+    parent_dir = os.path.dirname(script_dir)
+    slabs_file_path = os.path.join(parent_dir, "tax", "slabs.json")
+
+    if not os.path.exists(slabs_file_path):
+        raise HTTPException(status_code=404, detail="Tax slabs file not found")
+
+    with open(slabs_file_path, "r") as f:
+        slabs_data = json.load(f)
+
+    return tax_service.calculate_tax(request.income, request.expenses, request.deductions, request.regime, slabs_data)
