@@ -1,0 +1,18 @@
+{
+  "india": {
+    "old_regime": [
+      {"min_income": 0, "max_income": 250000, "tax_rate": 0},
+      {"min_income": 250001, "max_income": 500000, "tax_rate": 0.05},
+      {"min_income": 500001, "max_income": 1000000, "tax_rate": 0.20},
+      {"min_income": 1000001, "max_income": Infinity, "tax_rate": 0.30}
+    ],
+    "new_regime": [
+      {"min_income": 0, "max_income": 300000, "tax_rate": 0},
+      {"min_income": 300001, "max_income": 600000, "tax_rate": 0.05},
+      {"min_income": 600001, "max_income": 900000, "tax_rate": 0.10},
+      {"min_income": 900001, "max_income": 1200000, "tax_rate": 0.15},
+      {"min_income": 1200001, "max_income": 1500000, "tax_rate": 0.20},
+      {"min_income": 1500001, "max_income": Infinity, "tax_rate": 0.30}
+    ]
+  }
+}
