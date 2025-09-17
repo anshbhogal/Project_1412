@@ -1,5 +1,11 @@
 from sqlalchemy.orm import Session
 from typing import List
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+import io
+import csv
 
 from .. import schemas
 from ..models.models import Transaction, TaxDeduction # Updated import
@@ -202,3 +208,48 @@ def calculate_tax(income: float, expenses: float, deductions_input: dict, regime
         new_regime_tax_liability=new_regime_tax_liability,
         deductions_used=deductions_used
     )
+
+def generate_tax_report_pdf(summary_data: dict) -> io.BytesIO:
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
+
+    story.append(Paragraph("Tax Summary Report", styles['h1']))
+    story.append(Spacer(1, 0.2 * 100))
+
+    # Convert summary_data to a list of lists for the table
+    data = [["Category", "Amount"]]
+    for key, value in summary_data.items():
+        # Format float values to 2 decimal places
+        formatted_value = f"₹{value:,.2f}" if isinstance(value, (int, float)) else str(value)
+        data.append([key.replace('_', ' ').title(), formatted_value])
+
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    story.append(table)
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+def generate_tax_report_csv(summary_data: dict) -> io.BytesIO:
+    buffer = io.BytesIO()
+    writer = csv.writer(buffer)
+
+    # Write header
+    writer.writerow(summary_data.keys())
+
+    # Write data
+    writer.writerow([value for value in summary_data.values()])
+    
+    buffer.seek(0)
+    return buffer
