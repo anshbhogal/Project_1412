@@ -10,6 +10,9 @@ from ..dependencies import get_db, get_current_user
 from ..services import tax_service
 from ..schemas.user import UserResponse
 from ..schemas.tax import TaxCalculationRequest, TaxCalculationResponse
+from ..services.tax_service import generate_tax_report_pdf, generate_tax_report_csv
+from fastapi.responses import StreamingResponse
+from typing import Optional
 
 router = APIRouter()
 
@@ -62,3 +65,26 @@ def calculate_tax_route(
         slabs_data = json.load(f)
 
     return tax_service.calculate_tax(request.income, request.expenses, request.deductions, request.regime, slabs_data)
+
+@router.get("/report", response_class=StreamingResponse)
+def get_tax_report(
+    report_type: str, 
+    country: str = "india", 
+    regime: str = "old",
+    db: Session = Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user)
+):
+    summary_data = tax_service.calculate_tax_summary(db, current_user.id).dict()
+
+    if report_type.lower() == "pdf":
+        pdf_buffer = generate_tax_report_pdf(summary_data)
+        return StreamingResponse(pdf_buffer, media_type="application/pdf", headers={
+            "Content-Disposition": "attachment; filename=\"tax_summary.pdf\"
+        })
+    elif report_type.lower() == "csv":
+        csv_buffer = generate_tax_report_csv(summary_data)
+        return StreamingResponse(csv_buffer, media_type="text/csv", headers={
+            "Content-Disposition": "attachment; filename=\"tax_summary.csv\"
+        })
+    else:
+        raise HTTPException(status_code=400, detail="Invalid report type. Choose 'pdf' or 'csv'.")
