@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 class TaxDeductionCreate(BaseModel):
     type: str
@@ -27,3 +27,19 @@ class TaxSummaryResponse(BaseModel):
 
 class TaxSuggestionResponse(BaseModel):
     suggestions: List[str]
+
+class TaxCalculationRequest(BaseModel):
+    income: float
+    expenses: float
+    deductions: dict
+    regime: str
+
+class TaxCalculationResponse(BaseModel):
+    taxable_income: float
+    tax_liability: float
+    tax_liability_without_deductions: float
+    tax_savings: float
+    regime_better: str
+    old_regime_tax_liability: float
+    new_regime_tax_liability: float
+    deductions_used: dict
