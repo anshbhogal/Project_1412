@@ -33,6 +33,19 @@ interface TaxSummaryData {
   total_deductions: number;
   taxable_income: number;
   tax_liability: number;
+  tax_liability_without_deductions: number;
+  tax_savings: number;
+  regime_better: string;
+  old_regime_tax_liability: number;
+  new_regime_tax_liability: number;
+  deductions_used: {
+    '80C': number;
+    '80D': number;
+    HRA: number;
+    home_loan: number;
+    NPS: number;
+    donations: number;
+  };
 }
 
 function TaxBarChart({ data }) {
