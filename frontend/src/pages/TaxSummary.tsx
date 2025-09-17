@@ -7,6 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // New import
+import { Slider } from "@/components/ui/slider"; // New import
 import {
   Table,
   TableBody,
@@ -18,10 +20,12 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // New Import
 import { format, getYear, startOfMonth, endOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useQuery } from '@tanstack/react-query';
-import { getTaxSummary, getTaxSlabs, calculateTax } from "../api/tax";
+import { getTaxSummary, getTaxSlabs, calculateTax, getTaxReport } from "../api/tax";
+import { Button } from "@/components/ui/button"; // New Import
 
 interface TaxSummaryData {
   total_income: number;
@@ -97,6 +101,11 @@ export default function TaxSummary() {
     donations: 0,
   });
 
+  // Scenario Simulator states
+  const [simulatedIncomeIncrease, setSimulatedIncomeIncrease] = useState(0);
+  const [simulated80CIncrease, setSimulated80CIncrease] = useState(0);
+  const [simulatedHRAIncrease, setSimulatedHRAIncrease] = useState(0);
+
   const { data: taxSummary, isLoading: isLoadingSummary, error: errorSummary } = useQuery({
     queryKey: ['taxSummary', selectedPeriodMonth, selectedPeriodYear],
     queryFn: () => {
@@ -116,13 +125,21 @@ export default function TaxSummary() {
   });
 
   const { data: taxCalculation, isLoading: isLoadingCalculation, error: errorCalculation } = useQuery({
-    queryKey: ['taxCalculation', taxSummary, deductionInputs, isNewRegime],
+    queryKey: ['taxCalculation', taxSummary, deductionInputs, isNewRegime, simulatedIncomeIncrease, simulated80CIncrease, simulatedHRAIncrease],
     queryFn: () => {
       if (!taxSummary) return null;
+      const  adjustedIncome = taxSummary.total_income + simulatedIncomeIncrease;
+      const  adjusted80CDeduction = deductionInputs['80C'] + simulated80CIncrease;
+      const  adjustedHRADeduction = deductionInputs.HRA + simulatedHRAIncrease;
+
       return calculateTax({
-        income: taxSummary.total_income,
+        income: adjustedIncome,
         expenses: taxSummary.total_expenses,
-        deductions: deductionInputs,
+        deductions: {
+          ...deductionInputs,
+          '80C': adjusted80CDeduction,
+          HRA: adjustedHRADeduction
+        },
         regime: isNewRegime ? 'new' : 'old',
       });
     },
@@ -163,6 +180,24 @@ export default function TaxSummary() {
     }));
   };
 
+  const handleExportReport = async (reportType: 'pdf' | 'csv') => {
+    try {
+      const data = await getTaxReport(reportType, 'india', isNewRegime ? 'new' : 'old');
+      const blob = new Blob([data], { type: reportType === 'pdf' ? 'application/pdf' : 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tax_summary.${reportType}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      // TODO: Show a friendly error message
+    }
+  };
+
   const currentTotalIncome = taxCalculation?.income || taxSummaryData?.total_income || 0;
   const currentTotalExpenses = taxCalculation?.expenses || taxSummaryData?.total_expenses || 0;
 
@@ -175,6 +210,16 @@ export default function TaxSummary() {
   const taxLiabilityNoDeductions = taxCalculation?.tax_liability_without_deductions || 0;
 
   const taxSavings = taxCalculation?.tax_savings || 0;
+
+  const savingsCardColorClass = useMemo(() => {
+    if (taxSavings > 10000) { // Example threshold for "good savings"
+      return "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200";
+    } else if (taxSavings > 0) {
+      return "bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200";
+    } else {
+      return "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"; // Default if no savings or negative
+    }
+  }, [taxSavings]);
 
   const pieChartData = useMemo(() => {
     return [
@@ -208,6 +253,47 @@ export default function TaxSummary() {
     if (cap === Infinity) return `${formatCurrency(currentAmount)} Used`;
     return `${formatCurrency(currentAmount)} / ${formatCurrency(cap)} Used`;
   };
+
+  const getTaxSavingSuggestion = () => {
+    if (!taxCalculation) return null;
+
+    const oldRegimeTax = taxCalculation.old_regime_tax_liability;
+    const newRegimeTax = taxCalculation.new_regime_tax_liability;
+    const currentRegimeTax = isNewRegime ? newRegimeTax : oldRegimeTax;
+
+    let suggestionText = "";
+    let suggestionColor = "";
+
+    if (oldRegimeTax < newRegimeTax) {
+      const savings = newRegimeTax - oldRegimeTax;
+      suggestionText = `Old Regime saves you ${formatCurrency(savings)} more!`;
+      suggestionColor = "text-green-600";
+    } else if (newRegimeTax < oldRegimeTax) {
+      const savings = oldRegimeTax - newRegimeTax;
+      suggestionText = `New Regime is better by ${formatCurrency(savings)}.`;
+      suggestionColor = "text-green-600";
+    } else {
+      suggestionText = "Both regimes result in similar tax liability.";
+      suggestionColor = "text-gray-600";
+    }
+
+    // 80C suggestion
+    const eightyCSaved = DEDUCTION_CAPS['80C'] - deductionInputs['80C'];
+    if (eightyCSaved > 0) {
+      const potentialTaxSaving80C = eightyCSaved * (isNewRegime ? 0 : 0.2); // Simplified: assuming 20% slab for old regime
+      suggestionText += ` You can still invest ${formatCurrency(eightyCSaved)} more in 80C to save approx. ${formatCurrency(potentialTaxSaving80C)} tax.`;
+    }
+
+    return <p className={`text-md font-semibold mt-4 ${suggestionColor}`}>{suggestionText}</p>;
+  };
+
+  const regimeComparisonData = useMemo(() => {
+    if (!taxCalculation) return [];
+    return [
+      { name: 'Old Regime', liability: taxCalculation.old_regime_tax_liability },
+      { name: 'New Regime', liability: taxCalculation.new_regime_tax_liability },
+    ];
+  }, [taxCalculation]);
 
   return (
     <div className="space-y-6 p-6">
@@ -247,6 +333,11 @@ export default function TaxSummary() {
               ))}
             </SelectContent>
           </Select>
+          <div className="flex space-x-2 ml-4">
+            <Button onClick={() => handleExportReport('pdf')}>Export PDF</Button>
+            <Button onClick={() => handleExportReport('csv')}>Export CSV</Button>
+            {/* <Button>Email Report</Button> */}
+          </div>
         </div>
       </div>
 
@@ -290,7 +381,7 @@ export default function TaxSummary() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md rounded-2xl bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+        <Card className={`shadow-md rounded-2xl ${savingsCardColorClass}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-semibold">Tax Liability</CardTitle>
             <Percent className="h-5 w-5" />
@@ -314,7 +405,16 @@ export default function TaxSummary() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="80c">80C Deductions</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label htmlFor="80c">80C Deductions</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Covers investments in LIC, ELSS, PPF, EPF, Home Loan Principal, Tuition Fees, etc. Max: {formatCurrency(DEDUCTION_CAPS['80C'])}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Input
                   id="80c"
                   type="number"
@@ -327,7 +427,16 @@ export default function TaxSummary() {
                 <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('80C')}</p>
               </div>
               <div>
-                <Label htmlFor="80d">80D Deductions</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label htmlFor="80d">80D Deductions</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Covers health insurance premiums for self, family, and parents. Max: {formatCurrency(DEDUCTION_CAPS['80D'])} (for non-senior citizens)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Input
                   id="80d"
                   type="number"
@@ -340,7 +449,16 @@ export default function TaxSummary() {
                 <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('80D')}</p>
               </div>
               <div>
-                <Label htmlFor="hra">HRA Exemption</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label htmlFor="hra">HRA Exemption</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>House Rent Allowance exemption. Actual calculation is complex, depends on rent paid, salary, and location.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Input
                   id="hra"
                   type="number"
@@ -353,7 +471,16 @@ export default function TaxSummary() {
                 <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('HRA')}</p>
               </div>
               <div>
-                <Label htmlFor="home_loan">Home Loan Interest (24b)</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label htmlFor="home_loan">Home Loan Interest (24b)</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Deduction on interest paid for housing loan. Max: {formatCurrency(DEDUCTION_CAPS.home_loan)}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Input
                   id="home_loan"
                   type="number"
@@ -366,7 +493,16 @@ export default function TaxSummary() {
                 <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('home_loan')}</p>
               </div>
               <div>
-                <Label htmlFor="nps">NPS (80CCD(1B))</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label htmlFor="nps">NPS (80CCD(1B))</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Additional deduction for National Pension System contributions. Max: {formatCurrency(DEDUCTION_CAPS.NPS)}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Input
                   id="nps"
                   type="number"
@@ -379,7 +515,16 @@ export default function TaxSummary() {
                 <p className="text-sm text-muted-foreground mt-1">{getProgressLabel('NPS')}</p>
               </div>
               <div>
-                <Label htmlFor="donations">Donations (80G)</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Label htmlFor="donations">Donations (80G)</Label>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Deduction for donations made to certain approved funds and institutions. Limits vary.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <Input
                   id="donations"
                   type="number"
@@ -428,6 +573,90 @@ export default function TaxSummary() {
           </CardHeader>
           <CardContent>
             {monthlyTaxData.length > 0 ? <TaxBarChart data={monthlyTaxData} /> : <p className="text-muted-foreground">Loading chart data...</p>}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-md rounded-2xl col-span-1 lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Regime Comparison & Suggestions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart
+                data={regimeComparisonData}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="name" className="fill-foreground" />
+                <YAxis className="fill-foreground" />
+                <Tooltip
+                  cursor={{ fill: 'hsl(var(--muted))', opacity: '0.2' }}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: 'var(--radius)'
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  formatter={(value: number) => formatCurrency(value)}
+                />
+                <Legend />
+                <Bar dataKey="liability" fill="hsl(var(--primary))" name="Tax Liability" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            {getTaxSavingSuggestion()}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-md rounded-2xl col-span-1 lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Scenario Simulator</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="income-increase">Salary Increase: {formatCurrency(simulatedIncomeIncrease)}</Label>
+                <Slider
+                  id="income-increase"
+                  min={0}
+                  max={500000} // Max increase of 5 lakhs for example
+                  step={10000}
+                  value={[simulatedIncomeIncrease]}
+                  onValueChange={([value]) => setSimulatedIncomeIncrease(value)}
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="80c-increase">Extra 80C Investments: {formatCurrency(simulated80CIncrease)}</Label>
+                <Slider
+                  id="80c-increase"
+                  min={0}
+                  max={DEDUCTION_CAPS['80C'] - deductionInputs['80C']} // Max up to 80C limit
+                  step={10000}
+                  value={[simulated80CIncrease]}
+                  onValueChange={([value]) => setSimulated80CIncrease(value)}
+                  className="mt-2"
+                  disabled={(DEDUCTION_CAPS['80C'] - deductionInputs['80C']) <= 0}
+                />
+              </div>
+              <div>
+                <Label htmlFor="hra-increase">Higher HRA: {formatCurrency(simulatedHRAIncrease)}</Label>
+                <Slider
+                  id="hra-increase"
+                  min={0}
+                  max={100000} // Max increase of 1 lakh for example
+                  step={5000}
+                  value={[simulatedHRAIncrease]}
+                  onValueChange={([value]) => setSimulatedHRAIncrease(value)}
+                  className="mt-2"
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
