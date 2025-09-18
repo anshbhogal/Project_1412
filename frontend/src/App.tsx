@@ -12,7 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import TaxSummary from "./pages/TaxSummary";
 import Investments from "./pages/Investments";
-import Forecasts from "./pages/Forecasts";
+import Forecasting from "./pages/Forecasting";
 import Recommendations from "./pages/Recommendations";
 import Reports from "./pages/Reports";
 
@@ -33,7 +33,7 @@ const App = () => (
             <Route path="/transactions" element={<AppLayout><Transactions /></AppLayout>} />
             <Route path="/tax" element={<AppLayout><TaxSummary /></AppLayout>} />
             <Route path="/investments" element={<AppLayout><Investments /></AppLayout>} />
-            <Route path="/forecasts" element={<AppLayout><Forecasts /></AppLayout>} />
+            <Route path="/forecasts" element={<AppLayout><Forecasting /></AppLayout>} />
             <Route path="/recommendations" element={<AppLayout><Recommendations /></AppLayout>} />
             <Route path="/reports" element={<AppLayout><Reports /></AppLayout>} />
             <Route path="/settings" element={<AppLayout><div className="p-8 text-center text-muted-foreground">Settings - Coming Soon</div></AppLayout>} />
