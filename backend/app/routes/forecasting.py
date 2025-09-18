@@ -1,53 +1,23 @@
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from ..schemas.forecasting import ForecastRequest, ForecastResponseList
-from ..services import forecasting_service
-from ..dependencies import get_db, get_current_user
-from ..models.models import Transaction
-from ..schemas.user import UserResponse
+from backend.app.schemas.forecasting import ForecastRequest, ForecastResponse, ForecastResult
+from backend.app.services.forecasting_service import generate_financial_forecast
+from backend.app.database import get_db
+from backend.app.utils.auth import get_current_user
 
-router = APIRouter(prefix="/forecasting", tags=["Forecasting"])
+router = APIRouter()
 
-
-@router.get("/expenses", response_model=ForecastResponseList)
-def get_predicted_expenses(
-    request: ForecastRequest = Depends(),
+@router.post("/predict", response_model=ForecastResponse)
+def predict_forecast(
+    request: ForecastRequest,
     db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user),
+    user: dict = Depends(get_current_user)
 ):
-    transactions = (
-        db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
-    )
-    forecasts = forecasting_service.get_forecast_expenses(
-        transactions, request.months
-    )
-    return ForecastResponseList(forecasts=forecasts)
-
-
-@router.get("/income", response_model=ForecastResponseList)
-def get_predicted_income(
-    request: ForecastRequest = Depends(),
-    db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user),
-):
-    transactions = (
-        db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
-    )
-    forecasts = forecasting_service.get_forecast_income(transactions, request.months)
-    return ForecastResponseList(forecasts=forecasts)
-
-
-@router.get("/cashflow", response_model=ForecastResponseList)
-def get_projected_cashflow(
-    request: ForecastRequest = Depends(),
-    db: Session = Depends(get_db),
-    current_user: UserResponse = Depends(get_current_user),
-):
-    transactions = (
-        db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
-    )
-    forecasts = forecasting_service.get_forecast_cashflow(transactions, request.months)
-    return ForecastResponseList(forecasts=forecasts)
+    try:
+        forecast_data = generate_financial_forecast(db, user["id"], request.months)
+        return ForecastResponse(predictions=forecast_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
