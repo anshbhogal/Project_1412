@@ -25,7 +25,7 @@ app.include_router(financial_summary.router, prefix="/summary", tags=["Financial
 app.include_router(transactions.router, prefix="/transactions", tags=["Transactions"])
 app.include_router(investments.router, prefix="/investments", tags=["Investments"])
 app.include_router(tax.router, prefix="/tax", tags=["Tax"])
-app.include_router(forecasting.router, prefix="/forecasts", tags=["Forecasts"])
+app.include_router(forecasting.router, prefix="/forecasting", tags=["Forecasts"])
 app.include_router(recommendations.router, prefix="/recommendations", tags=["Recommendations"])
 app.include_router(report_routes.router, prefix="/reports", tags=["Reports"])
 
