@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import engine, Base
-from .routes import auth, financial_summary, transactions, investments, tax, forecasting, recommendations, report_routes
+from .routes import auth, financial_summary, transactions, investments, tax, forecasting, recommendations, report_routes, chatbot
 
 Base.metadata.create_all(bind=engine)
 
@@ -28,6 +28,7 @@ app.include_router(tax.router, prefix="/tax", tags=["Tax"])
 app.include_router(forecasting.router, prefix="/forecasting", tags=["Forecasts"])
 app.include_router(recommendations.router, prefix="/recommendations", tags=["Recommendations"])
 app.include_router(report_routes.router, prefix="/reports", tags=["Reports"])
+app.include_router(chatbot.router, prefix="/chatbot", tags=["Chatbot"])
 
 @app.get("/")
 def read_root():

@@ -1,0 +1,8 @@
+[
+  { "term": "80C", "description": "Section 80C allows deductions up to ₹1.5L for investments like PPF, ELSS, Life Insurance premiums, EPF, etc." },
+  { "term": "80D", "description": "Section 80D provides deductions for health insurance premiums. Max ₹25k for individuals, ₹50k for senior citizens." },
+  { "term": "HRA", "description": "House Rent Allowance deduction is based on rent paid, salary, and city of residence." },
+  { "term": "24b", "description": "Section 24(b) allows deduction up to ₹2L on interest paid on home loan." },
+  { "term": "80G", "description": "Deductions for donations to eligible charitable institutions (50% or 100% depending on institution)." },
+  { "term": "Standard Deduction", "description": "Flat ₹50,000 deduction available for salaried individuals and pensioners under both regimes." }
+]

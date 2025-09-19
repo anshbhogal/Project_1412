@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { DollarSign, TrendingUp, TrendingDown, Wallet, Percent, ShieldHalf, CalendarIcon, Lightbulb, CheckCircle, TrendingUp as TrendingUpIcon } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Wallet, Percent, ShieldHalf, CalendarIcon, Lightbulb, CheckCircle, TrendingUp as TrendingUpIcon, MessageCircle, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
@@ -24,9 +24,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Tooltip as ShadcnTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Renamed import
 import { format, getYear, startOfMonth, endOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query'; // Added useMutation
 import { getTaxSummary, getTaxSlabs, calculateTax, getTaxReport } from "../api/tax";
-import { Button } from "@/components/ui/button"; // New Import
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"; // New Dialog imports
+import { postChatbotQuery } from "../api/chatbot"; // New Chatbot API import
 
 interface TaxSummaryData {
   total_income: number;
@@ -169,6 +171,36 @@ export default function TaxSummary() {
     NPS: 0,
     donations: 0,
   });
+
+  // Chatbot states
+  interface ChatMessage {
+    sender: 'user' | 'bot';
+    message: string;
+  }
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([{ sender: 'bot', message: 'Hello! How can I help you with your taxes today?' }]);
+  const [chatInput, setChatInput] = useState('');
+
+  const chatbotMutation = useMutation({
+    mutationFn: postChatbotQuery,
+    onSuccess: (data) => {
+      setChatHistory(prev => [...prev, { sender: 'bot', message: data.answer }]);
+    },
+    onError: (error) => {
+      console.error("Chatbot query failed:", error);
+      setChatHistory(prev => [...prev, { sender: 'bot', message: 'Sorry, something went wrong. Please try again later.' }]);
+    }
+  });
+
+  const handleSendMessage = () => {
+    if (chatInput.trim() === '') return;
+    setChatHistory(prev => [...prev, { sender: 'user', message: chatInput }]);
+    chatbotMutation.mutate({ question: chatInput });
+    setChatInput('');
+  };
+
+  const handleQuickSuggestion = (term: string) => {
+    setChatInput(term);
+  };
 
   // Scenario Simulator states
   const [simulatedIncomeIncrease, setSimulatedIncomeIncrease] = useState(0);
@@ -322,6 +354,15 @@ export default function TaxSummary() {
     donations: Infinity, // 80G has complex limits, simplifying for UI
   }), []);
 
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(0, i);
+    return { value: format(date, 'MM'), label: format(date, 'MMM') };
+  });
+
+  const years = Array.from({ length: 5 }, (_, i) => String(getYear(new Date()) - 2 + i));
+
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false); // New state for chatbot visibility
+
   const getProgressValue = (deductionKey: string) => {
     const currentAmount = deductionInputs[deductionKey as keyof typeof deductionInputs];
     const cap = DEDUCTION_CAPS[deductionKey as keyof typeof DEDUCTION_CAPS];
@@ -447,6 +488,74 @@ export default function TaxSummary() {
             {/* <Button>Email Report</Button> */}
           </div>
         </div>
+      </div>
+
+      {/* Chatbot Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Dialog open={isChatbotOpen} onOpenChange={setIsChatbotOpen}>
+          <DialogTrigger asChild>
+            <Button
+              className="rounded-full p-4 shadow-lg w-16 h-16"
+              aria-label="Open Chatbot"
+            >
+              <MessageCircle className="h-8 w-8" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="fixed bottom-6 right-6 top-auto left-auto -translate-x-0 -translate-y-0 w-[90vw] max-w-sm h-[70vh] max-h-[500px] flex flex-col sm:w-96 sm:h-[500px]">
+            <DialogHeader>
+              <DialogTitle>Tax Chatbot</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {chatHistory.map((chat, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "flex",
+                    chat.sender === 'user' ? "justify-end" : "justify-start"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "p-2 rounded-lg max-w-[70%]",
+                      chat.sender === 'user'
+                        ? "bg-blue-500 text-white dark:bg-blue-700"
+                        : "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                    )}
+                  >
+                    {chat.message}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t flex flex-wrap gap-2">
+              {['80C', '80D', 'HRA', '24b', '80G', 'Standard Deduction'].map((term) => (
+                <Button
+                  key={term}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickSuggestion(term)}
+                  className="rounded-full"
+                >
+                  {term}
+                </Button>
+              ))}
+            </div>
+            <div className="border-t p-4 flex items-center">
+              <Input
+                placeholder="Ask about deductions..."
+                className="flex-1 mr-2"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') handleSendMessage();
+                }}
+              />
+              <Button onClick={handleSendMessage} disabled={chatbotMutation.isPending}>
+                <Send className="h-5 w-5" />
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
