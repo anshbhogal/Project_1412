@@ -72,7 +72,10 @@ function TaxLineChart({ data, showExpenses }: { data: any[], showExpenses: boole
         <YAxis className="fill-foreground" />
         <Tooltip
           cursor={{ fill: 'hsl(var(--muted))', opacity: '0.2' }}
-          contentStyle={{
+          content={(
+            <CustomLineTooltip formatCurrency={formatCurrency} showExpenses={showExpenses} />
+          )}
+          wrapperStyle={{
             backgroundColor: 'hsl(var(--card))',
             borderColor: 'hsl(var(--border))',
             borderRadius: 'var(--radius)'
