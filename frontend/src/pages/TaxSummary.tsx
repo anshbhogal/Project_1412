@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { DollarSign, TrendingUp, TrendingDown, Wallet, Percent, ShieldHalf, CalendarIcon, Lightbulb, CheckCircle, TrendingUp as TrendingUpIcon, MessageCircle, Send } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Wallet, Percent, ShieldHalf, CalendarIcon, Lightbulb, CheckCircle, TrendingUp as TrendingUpIcon, MessageCircle, Send, Landmark, Receipt, PiggyBank, Scale } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
@@ -81,8 +81,8 @@ function TaxLineChart({ data, showExpenses }: { data: any[], showExpenses: boole
           itemStyle={{ color: 'hsl(var(--foreground))' }}
         />
         <Legend />
-        <Line type="monotone" dataKey="income" stroke="hsl(var(--primary))" name="Income" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-        {showExpenses && <Line type="monotone" dataKey="expenses" stroke="hsl(var(--orange-500))" name="Expenses" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />}
+        <Line type="monotone" dataKey="income" stroke="hsl(var(--primary))" name="Income" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} animationDuration={1500} animationEasing="ease-out" />
+        {showExpenses && <Line type="monotone" dataKey="expenses" stroke="hsl(var(--orange-500))" name="Expenses" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} animationDuration={1500} animationEasing="ease-out" />}
       </LineChart>
     </ResponsiveContainer>
   );
@@ -152,6 +152,37 @@ const CustomPieTooltip = ({ active, payload, formatCurrency }) => {
     );
   }
   return null;
+};
+
+// Custom Tooltip for Line Chart
+const CustomLineTooltip = ({ active, payload, label, formatCurrency, showExpenses }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-md border bg-popover p-2 text-sm shadow-md">
+        <p className="font-semibold text-foreground">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={`item-${index}`} style={{ color: entry.color }}>
+            {entry.name}: {formatCurrency(entry.value)}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+// Custom Label for Pie Chart
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5; // Position label in the middle of the arc
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-semibold">
+      {`${name} ${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
 };
 
 export default function TaxSummary() {
@@ -340,8 +371,9 @@ export default function TaxSummary() {
       { name: 'Income', value: currentTotalIncome, color: '#3b82f6' }, // Blue-500
       { name: 'Expenses', value: currentTotalExpenses, color: '#f97316' }, // Orange-500
       { name: 'Deductions', value: effectiveTotalDeductions, color: '#22c55e' }, // Green-500
+      { name: 'Tax Liability', value: currentTaxLiability, color: '#8b5cf6' }, // Purple-500
     ];
-  }, [currentTotalIncome, currentTotalExpenses, effectiveTotalDeductions]);
+  }, [currentTotalIncome, currentTotalExpenses, effectiveTotalDeductions, currentTaxLiability]);
 
   const PIE_COLORS = pieChartData.map(d => d.color);
 
@@ -559,65 +591,107 @@ export default function TaxSummary() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="shadow-md rounded-2xl bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-semibold">Total Income</CardTitle>
-            <TrendingUp className="h-5 w-5" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">
-              {formatCurrency(currentTotalIncome)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2"></p>
-          </CardContent>
-        </Card>
+        <motion.div
+          whileHover={{ scale: 1.03, boxShadow: "0 8px 25px -5px rgba(0,0,0,0.1)" }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="h-full"
+        >
+          <Card className="h-full flex flex-col justify-between shadow-md rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xl font-heading text-primary">Total Income</CardTitle>
+              <Landmark className="h-6 w-6 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="text-5xl font-bold text-primary"
+              >
+                <AnimatedNumber value={currentTotalIncome} format={formatCurrency} />
+              </motion.div>
+              <p className="text-sm text-muted-foreground mt-2">Gross earnings</p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card className="shadow-md rounded-2xl bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-semibold">Total Expenses</CardTitle>
-            <TrendingDown className="h-5 w-5" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">
-              {formatCurrency(currentTotalExpenses)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2"></p>
-          </CardContent>
-        </Card>
+        <motion.div
+          whileHover={{ scale: 1.03, boxShadow: "0 8px 25px -5px rgba(0,0,0,0.1)" }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="h-full"
+        >
+          <Card className="h-full flex flex-col justify-between shadow-md rounded-2xl bg-gradient-to-br from-red-100/10 to-red-50/5 hover:from-red-100/20 hover:to-red-50/10 transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xl font-heading text-red-600 dark:text-red-400">Total Expenses</CardTitle>
+              <Receipt className="h-6 w-6 text-red-600 dark:text-red-400" />
+            </CardHeader>
+            <CardContent>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="text-5xl font-bold text-red-600 dark:text-red-400"
+              >
+                <AnimatedNumber value={currentTotalExpenses} format={formatCurrency} />
+              </motion.div>
+              <p className="text-sm text-muted-foreground mt-2">Total outflow</p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card className="shadow-md rounded-2xl bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-semibold">Taxable Income</CardTitle>
-            <Wallet className="h-5 w-5" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">
-              {formatCurrency(effectiveTaxableIncome)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-2"></p>
-          </CardContent>
-        </Card>
+        <motion.div
+          whileHover={{ scale: 1.03, boxShadow: "0 8px 25px -5px rgba(0,0,0,0.1)" }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="h-full"
+        >
+          <Card className="h-full flex flex-col justify-between shadow-md rounded-2xl bg-gradient-to-br from-green-100/10 to-green-50/5 hover:from-green-100/20 hover:to-green-50/10 transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xl font-heading text-green-600 dark:text-green-400">Tax Savings</CardTitle>
+              <PiggyBank className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </CardHeader>
+            <CardContent>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="text-5xl font-bold text-green-600 dark:text-green-400"
+              >
+                <AnimatedNumber value={taxSavings} format={formatCurrency} />
+              </motion.div>
+              <p className="text-sm text-muted-foreground mt-2">Through deductions & regime choice</p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card className={`shadow-md rounded-2xl ${savingsCardColorClass}`}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-semibold">Tax Saved</CardTitle>
-            <Percent className="h-5 w-5" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-bold">
-              <AnimatedNumber value={regimeSavings} format={formatCurrency} />
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Compared to the other regime.
-            </p>
-          </CardContent>
-        </Card>
+        <motion.div
+          whileHover={{ scale: 1.03, boxShadow: "0 8px 25px -5px rgba(0,0,0,0.1)" }}
+          transition={{ type: "spring", stiffness: 300 }}
+          className="h-full"
+        >
+          <Card className="h-full flex flex-col justify-between shadow-md rounded-2xl bg-gradient-to-br from-orange-100/10 to-orange-50/5 hover:from-orange-100/20 hover:to-orange-50/10 transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xl font-heading text-orange-600 dark:text-orange-400">Tax Owed</CardTitle>
+              <Scale className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            </CardHeader>
+            <CardContent>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="text-5xl font-bold text-orange-600 dark:text-orange-400"
+              >
+                <AnimatedNumber value={currentTaxLiability} format={formatCurrency} />
+              </motion.div>
+              <p className="text-sm text-muted-foreground mt-2">Your estimated tax liability</p>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="shadow-md rounded-2xl">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Deductions Input</CardTitle>
+            <CardTitle className="text-xl font-heading">Deductions Input</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -775,6 +849,7 @@ export default function TaxSummary() {
                   animationBegin={800} // Animation start delay
                   animationDuration={800} // Animation duration
                   animationEasing="ease-in-out" // Easing function
+                  label={renderCustomizedLabel}
                 >
                   {pieChartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />

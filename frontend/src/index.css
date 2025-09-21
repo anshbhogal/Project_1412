@@ -18,6 +18,10 @@
     --primary-light: 213 84% 85%;
     --primary-dark: 213 94% 45%;
     
+    /* Secondary - Orange-500 */
+    --secondary: 29 95% 53%;
+    --secondary-foreground: 0 0% 100%;
+    
     /* Success Green-500 */
     --success: 144 65% 45%;
     --success-foreground: 0 0% 100%;
@@ -33,11 +37,15 @@
     --warning-foreground: 0 0% 100%;
     --warning-light: 39 92% 95%;
     
-    /* Secondary/Accent Cyan-500 */
-    --accent: 186 91% 43%;
+    /* Accent Green-500 */
+    --accent: 144 64% 45%;
     --accent-foreground: 0 0% 100%;
-    --accent-light: 186 91% 90%;
+    --accent-light: 144 64% 80%;
     
+    /* Neutral Backgrounds */
+    --neutral-light: 210 17% 98%;
+    --neutral-dark: 223 30% 11%;
+
     /* Text Secondary Gray-500 */
     --muted: 210 17% 98%; /* Gray-50 */
     --muted-foreground: 215 9% 48%; /* Gray-500 */
@@ -79,7 +87,7 @@
     /* Border Radius */
     --radius: 0.75rem; /* rounded-lg (12px) for general elements */
     --radius-lg: 1rem;  /* rounded-xl (16px) for larger elements */
-    --radius-xl: 1.5rem; /* rounded-2xl (24px) for cards/sections */
+    --radius-xl: 1rem; /* rounded-2xl (16px) for cards/sections, updated from 1.5rem */
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -87,13 +95,16 @@
   }
 
   .dark {
-    --background: 213 30% 18%; /* Dark mode background #1E293B */
+    --background: 223 30% 11%; /* Dark mode background #111827 */
     --foreground: 210 20% 90%; /* Dark mode text #E2E8F0 */
     
     --primary: 213 94% 53%;
     --primary-foreground: 0 0% 100%;
     --primary-light: 213 84% 25%;
     --primary-dark: 213 94% 85%;
+	
+    --secondary: 29 95% 53%;
+    --secondary-foreground: 0 0% 100%;
     
     --success: 144 65% 45%;
     --success-foreground: 0 0% 100%;
@@ -107,9 +118,12 @@
     --warning-foreground: 0 0% 100%;
     --warning-light: 39 92% 15%;
     
-    --accent: 186 91% 43%;
+    --accent: 144 64% 45%;
     --accent-foreground: 0 0% 100%;
-    --accent-light: 186 91% 15%;
+    --accent-light: 144 64% 15%;
+
+    --neutral-light: 210 17% 98%;
+    --neutral-dark: 223 30% 11%;
     
     --muted: 213 30% 18%;
     --muted-foreground: 215 9% 65%;
@@ -124,7 +138,7 @@
     --ring: 213 94% 53%;
     --hover: 215 29% 30%;
     
-    --sidebar-background: 213 30% 18%; /* Dark mode background #1E293B */
+    --sidebar-background: 223 30% 11%; /* Dark mode background #111827 */
     --sidebar-foreground: 210 20% 90%; /* Dark mode text #E2E8F0 */
     --sidebar-primary: 213 94% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -138,10 +152,10 @@
     --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(215 29% 30%));
     --gradient-chart: linear-gradient(180deg, hsl(var(--primary) / 0.2), hsl(var(--primary) / 0.05));
     
-    --shadow-sm: 0 1px 2px 0 hsl(213 30% 5% / 0.3);
-    --shadow-md: 0 4px 6px -1px hsl(213 30% 5% / 0.4), 0 2px 4px -2px hsl(213 30% 5% / 0.2);
-    --shadow-lg: 0 10px 15px -3px hsl(213 30% 5% / 0.5), 0 4px 6px -4px hsl(213 30% 5% / 0.2);
-    --shadow-card: 0 2px 8px hsl(213 30% 5% / 0.4);
+    --shadow-sm: 0 1px 2px 0 hsl(223 30% 5% / 0.3);
+    --shadow-md: 0 4px 6px -1px hsl(223 30% 5% / 0.4), 0 2px 4px -2px hsl(223 30% 5% / 0.2);
+    --shadow-lg: 0 10px 15px -3px hsl(223 30% 5% / 0.5), 0 4px 6px -4px hsl(223 30% 5% / 0.2);
+    --shadow-card: 0 2px 8px hsl(223 30% 5% / 0.4);
   }
 }
 

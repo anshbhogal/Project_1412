@@ -20,6 +20,17 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: ['Inter', 'system-ui', 'sans-serif'],
+				heading: ['Inter', 'system-ui', 'sans-serif'],
+			},
+			fontSize: {
+				'2xl': ['1.5rem', { lineHeight: '2rem' }], // text-2xl
+				'3xl': ['1.875rem', { lineHeight: '2.25rem' }], // text-3xl
+				'4xl': ['2.25rem', { lineHeight: '2.5rem' }], // text-4xl
+				'base': ['1rem', { lineHeight: '1.5rem' }], // text-base
+				'sm': ['0.875rem', { lineHeight: '1.25rem' }], // text-sm
+			},
+			fontWeight: {
+				bold: '700',
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -29,10 +40,14 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				hover: 'hsl(var(--hover))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
+					DEFAULT: '#2563eb', // blue-600
 					foreground: 'hsl(var(--primary-foreground))',
 					light: 'hsl(var(--primary-light))',
 					dark: 'hsl(var(--primary-dark))'
+				},
+				secondary: {
+					DEFAULT: '#f97316', // orange-500
+					foreground: 'hsl(var(--secondary-foreground))',
 				},
 				success: {
 					DEFAULT: 'hsl(var(--success))',
@@ -55,9 +70,13 @@ export default {
 					dark: 'hsl(var(--muted-dark))'
 				},
 				accent: {
-					DEFAULT: 'hsl(var(--accent))',
+					DEFAULT: '#22c55e', // green-500
 					foreground: 'hsl(var(--accent-foreground))',
 					light: 'hsl(var(--accent-light))'
+				},
+				neutral: {
+					light: '#f9fafb', // gray-50
+					dark: '#111827', // gray-900
 				},
 				card: {
 					DEFAULT: 'hsl(var(--card))',
@@ -82,7 +101,7 @@ export default {
 				'gradient-chart': 'var(--gradient-chart)'
 			},
 			boxShadow: {
-				'sm': 'var(--shadow-sm)',
+				'sm': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
 				'md': 'var(--shadow-md)',
 				'lg': 'var(--shadow-lg)',
 				'card': 'var(--shadow-card)'
@@ -95,7 +114,8 @@ export default {
 				lg: 'var(--radius-lg)',
 				md: 'var(--radius)',
 				sm: 'calc(var(--radius) - 4px)',
-				xl: 'var(--radius-xl)'
+				xl: 'var(--radius-xl)',
+				'2xl': '1rem', // rounded-2xl
 			},
 			keyframes: {
 				'accordion-down': {
