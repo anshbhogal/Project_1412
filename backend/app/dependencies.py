@@ -8,6 +8,7 @@ from .schemas import schemas
 from .models.models import User
 from .utils.auth import oauth2_scheme
 from .config import settings
+from .utils import auth_utils
 
 # DB session dependency
 def get_db():
@@ -25,7 +26,9 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = auth_utils.verify_access_token(token)
+        if payload is None:
+            raise credentials_exception
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception

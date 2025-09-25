@@ -9,11 +9,10 @@ from ..schemas.schemas import Token
 from ..models.models import User
 from ..dependencies import get_db, get_current_user
 from ..utils import auth as auth_utils
-from ..core import settings
-from fastapi.security import OAuth2PasswordBearer
+from ..config import settings
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 @router.post("/signup", response_model=UserResponse)
 def signup_user(user: UserCreate, db: Session = Depends(get_db)):
