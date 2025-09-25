@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 10080 # 7 days
     OTP_SECRET: str = "your-otp-secret"
     OTP_EXPIRE_MINUTES: int = 5
+    FERNET_KEY: str = "your-fernet-key-here" # Generate using Fernet.generate_key().decode()
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
