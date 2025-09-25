@@ -13,6 +13,10 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+class UserOTP(BaseModel):
+    email: EmailStr
+    otp: str
+
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
