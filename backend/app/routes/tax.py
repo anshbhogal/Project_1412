@@ -79,12 +79,12 @@ def get_tax_report(
     if report_type.lower() == "pdf":
         pdf_buffer = generate_tax_report_pdf(summary_data)
         return StreamingResponse(pdf_buffer, media_type="application/pdf", headers={
-            "Content-Disposition": "attachment; filename=\"tax_summary.pdf\"
+            "Content-Disposition": "attachment; filename=\"tax_summary.pdf\""
         })
     elif report_type.lower() == "csv":
         csv_buffer = generate_tax_report_csv(summary_data)
         return StreamingResponse(csv_buffer, media_type="text/csv", headers={
-            "Content-Disposition": "attachment; filename=\"tax_summary.csv\"
+            "Content-Disposition": "attachment; filename=\"tax_summary.csv\""
         })
     else:
         raise HTTPException(status_code=400, detail="Invalid report type. Choose 'pdf' or 'csv'.")

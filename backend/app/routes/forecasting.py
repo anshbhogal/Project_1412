@@ -3,10 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from backend.app.schemas.forecasting import ForecastRequest, ForecastResponse, ForecastResult
-from backend.app.services.forecasting_service import generate_financial_forecast
-from backend.app.database import get_db
-from backend.app.utils.auth import get_current_user
+from ..schemas.forecasting import ForecastRequest, ForecastResponse, ForecastResult
+from ..services.forecasting_service import generate_financial_forecast
+from ..database import get_db
+from ..utils.auth import get_current_user
 
 router = APIRouter()
 

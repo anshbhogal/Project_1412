@@ -7,7 +7,7 @@ from ..models.models import Transaction
 from ..schemas.forecasting import ForecastResponse
 from prophet import Prophet
 from sqlalchemy.orm import Session
-from backend.app.schemas.forecasting import ForecastResult
+from ..schemas.forecasting import ForecastResult
 
 
 def get_monthly_transactions(transactions: List[Transaction], is_expense: bool):
