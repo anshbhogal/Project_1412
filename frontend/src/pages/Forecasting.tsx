@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 import { format } from 'date-fns';
 import { getForecast } from '../api/forecasting';
-import AnimatedNumber from '../components/ui/animated-number';
+import { AnimatedNumber } from '../components/ui/animated-number';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
